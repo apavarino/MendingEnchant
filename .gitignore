@@ -1,2 +1,15 @@
 /target/
 /src/main/resources/plugin.yml
+/.idea/libraries/Maven__com_google_code_gson_gson_2_8_0.xml
+/.idea/libraries/Maven__com_google_guava_guava_21_0.xml
+/.idea/libraries/Maven__commons_lang_commons_lang_2_6.xml
+/.idea/libraries/Maven__org_bukkit_bukkit_1_15_2_R0_1_SNAPSHOT.xml
+/.idea/libraries/Maven__org_yaml_snakeyaml_1_25.xml
+/.idea/.gitignore
+/.idea/compiler.xml
+/.idea/jarRepositories.xml
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/uiDesigner.xml
+/.idea/vcs.xml
+/MendingEnchant.iml
