@@ -19,3 +19,7 @@ Java Edition required. Mending-Enchant is mainly compatible with Bukkit, Spigot 
 * Curseforge: https://www.curseforge.com/minecraft/bukkit-plugins/mendingenchant
 * Bukkit : https://dev.bukkit.org/projects/mendingenchant
 
+## Statistics
+<img align="center" src="https://bstats.org/signatures/bukkit/MendingEnchant.svg" alt="stats"/> 
+
+More stats [here](https://bstats.org/plugin/bukkit/MendingEnchant/16292)
