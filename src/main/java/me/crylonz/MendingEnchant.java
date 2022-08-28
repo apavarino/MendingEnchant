@@ -1,5 +1,6 @@
 package me.crylonz;
 
+import org.bstats.bukkit.Metrics;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -22,6 +23,7 @@ public class MendingEnchant extends JavaPlugin implements Listener {
     public void onEnable() {
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvents(this, this);
+        Metrics metrics = new Metrics(this, 16292);
         this.log.info("[MendingEnchant] is enabled !");
 
         File configFile = new File(getDataFolder(), "config.yml");
