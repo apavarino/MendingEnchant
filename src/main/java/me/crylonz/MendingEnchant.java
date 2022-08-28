@@ -1,24 +1,30 @@
 package me.crylonz;
 
+import me.crylonz.utils.MendingEnchantConfig;
+import me.crylonz.utils.MendingEnchantUpdater;
 import org.bstats.bukkit.Metrics;
+import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.enchantment.EnchantItemEvent;
+import org.bukkit.event.player.PlayerFishEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.util.logging.Logger;
 
+import static org.bukkit.event.player.PlayerFishEvent.State.CAUGHT_FISH;
+
 public class MendingEnchant extends JavaPlugin implements Listener {
 
     public final Logger log = Logger.getLogger("Minecraft");
-    private final double defaultRate = 6;
-    private double rateAtLevel30 = defaultRate;
-    private double custom1 = defaultRate * 2;
-    private double custom2 = defaultRate * 3;
-    private double custom3 = defaultRate * 4;
+
+    public MendingEnchantConfig config = new MendingEnchantConfig(this);
 
     public void onEnable() {
         PluginManager pm = getServer().getPluginManager();
@@ -27,32 +33,32 @@ public class MendingEnchant extends JavaPlugin implements Listener {
         this.log.info("[MendingEnchant] is enabled !");
 
         File configFile = new File(getDataFolder(), "config.yml");
+
+        registerConfig();
+
         if (!configFile.exists()) {
-
-            getConfig().options().header("DefaultProbability : Probability to have mending in percentage between 0% and 100% at enchant level 30.\n" +
-                    "0% = No chance to have Mending, 100% = Mending on all enchant\n" +
-                    "Other enchant levels adapt to this value (if rate is set to 10% you have 5% chance to have it at level 15)\n \n" +
-                    "You can also setup 3 customs probabilities : CustomProbabilty1 will be apply to player with permission mendingenchant.custom1\n" +
-                    "Same logic for CustomProbabilty2 and CustomProbabilty3\n" +
-                    "More information on project page : https://dev.bukkit.org/projects/mendingenchant\n" +
-                    "YOU NEED TO RELOAD/RESTART AFTER ANY CHANGE");
-
-            getConfig().set("DefaultProbability", defaultRate);
-            getConfig().set("DefaultProbability", defaultRate);
-            getConfig().set("CustomProbabilty1", custom1);
-            getConfig().set("CustomProbabilty2", custom2);
-            getConfig().set("CustomProbabilty3", custom3);
-            saveConfig();
+            saveDefaultConfig();
         } else {
-            rateAtLevel30 = getConfig().getInt("DefaultProbability");
-            custom1 = getConfig().getInt("CustomProbabilty1");
-            custom2 = getConfig().getInt("CustomProbabilty2");
-            custom3 = getConfig().getInt("CustomProbabilty3");
+            config.updateConfig();
         }
+
+        if (config.getBoolean("auto-update")) {
+            MendingEnchantUpdater updater = new MendingEnchantUpdater(this, 322356, this.getFile(), MendingEnchantUpdater.UpdateType.DEFAULT, true);
+        }
+
     }
 
     public void onDisable() {
         this.log.info("[MendingEnchant] is disabled !");
+    }
+
+    public void registerConfig() {
+        config.register("auto-update", true);
+        config.register("DefaultProbability", 6.0);
+        config.register("CustomProbability1", 12.0);
+        config.register("CustomProbability2", 18.0);
+        config.register("CustomProbability3", 24.0);
+        config.register("FishingProbability", 5.0);
     }
 
     @EventHandler
@@ -63,18 +69,34 @@ public class MendingEnchant extends JavaPlugin implements Listener {
 
             double div;
             if (e.getEnchanter().hasPermission("mendingenchant.custom1"))
-                div = 30 / custom1;
+                div = 30 / config.getDouble("CustomProbability1");
             else if (e.getEnchanter().hasPermission("mendingenchant.custom2"))
-                div = 30 / custom2;
+                div = 30 / config.getDouble("CustomProbability2");
             else if (e.getEnchanter().hasPermission("mendingenchant.custom3"))
-                div = 30 / custom3;
+                div = 30 / config.getDouble("CustomProbability3");
             else
-                div = 30 / rateAtLevel30;
+                div = 30 / config.getDouble("DefaultProbability");
 
             randomValue += e.getExpLevelCost() / div;
 
             if (randomValue > 100) {
                 e.getEnchantsToAdd().put(Enchantment.MENDING, 1);
+            }
+        }
+    }
+
+    @EventHandler
+    public void onFish(PlayerFishEvent e) {
+        if (e.getState() == CAUGHT_FISH) {
+            double randomValue = Math.random() * 100;
+            if (randomValue <= config.getDouble("FishingProbability")) {
+                ItemStack book = new ItemStack(Material.ENCHANTED_BOOK);
+                EnchantmentStorageMeta esm = (EnchantmentStorageMeta) book.getItemMeta();
+                esm.addStoredEnchant(Enchantment.MENDING, 1, false);
+                book.setItemMeta(esm);
+
+                e.getPlayer().getInventory().addItem(book);
+                e.getPlayer().playSound(e.getPlayer().getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 10, 1);
             }
         }
     }

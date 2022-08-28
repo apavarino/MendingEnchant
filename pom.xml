@@ -6,7 +6,7 @@
 
     <groupId>my.crylonz</groupId>
     <artifactId>MendingEnchant</artifactId>
-    <version>1.5</version>
+    <version>1.6</version>
     <build>
         <plugins>
             <plugin>
@@ -60,6 +60,11 @@
             <artifactId>bstats-bukkit</artifactId>
             <version>3.0.0</version>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.json-simple</groupId>
+            <artifactId>json-simple</artifactId>
+            <version>1.1.1</version>
         </dependency>
     </dependencies>
 </project>
