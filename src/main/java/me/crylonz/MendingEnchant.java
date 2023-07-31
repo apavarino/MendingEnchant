@@ -79,7 +79,7 @@ public class MendingEnchant extends JavaPlugin implements Listener {
 
             randomValue += e.getExpLevelCost() / div;
 
-            if (randomValue > 100) {
+            if (randomValue > 100 && e.getEnchantsToAdd().get(Enchantment.ARROW_INFINITE) == null) {
                 e.getEnchantsToAdd().put(Enchantment.MENDING, 1);
             }
         }
