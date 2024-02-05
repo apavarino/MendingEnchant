@@ -21,6 +21,8 @@ import java.util.logging.Logger;
 import static org.bukkit.event.player.PlayerFishEvent.State.CAUGHT_FISH;
 
 public class MendingEnchant extends JavaPlugin implements Listener {
+    // metrics don't work during testing
+    public static boolean allowMetrics = true;
 
     public final Logger log = Logger.getLogger("Minecraft");
 
@@ -29,7 +31,9 @@ public class MendingEnchant extends JavaPlugin implements Listener {
     public void onEnable() {
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvents(this, this);
-        Metrics metrics = new Metrics(this, 16292);
+        if(allowMetrics) {
+            Metrics metrics = new Metrics(this, 16292);
+        }
         this.log.info("[MendingEnchant] is enabled !");
 
         File configFile = new File(getDataFolder(), "config.yml");
