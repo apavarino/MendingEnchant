@@ -1,4 +1,4 @@
-/target/
+/mending-enchant-core/build
 /src/main/resources/plugin.yml
 /.idea/libraries/Maven__com_google_code_gson_gson_2_8_0.xml
 /.idea/libraries/Maven__com_google_guava_guava_21_0.xml
@@ -12,4 +12,6 @@
 /.idea/modules.xml
 /.idea/uiDesigner.xml
 /.idea/vcs.xml
+/.idea/
 /MendingEnchant.iml
+/.gradle/

@@ -1,5 +1,5 @@
 name: MendingEnchant
-main: me.crylonz.MendingEnchant
+main: me.crylonz.mendingEnchant.MendingEnchant
 version: "1.6.2"
 author: Crylonz
 description: Make possible to have mending with enchant table

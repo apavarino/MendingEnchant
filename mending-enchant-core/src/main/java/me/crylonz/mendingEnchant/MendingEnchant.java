@@ -1,7 +1,7 @@
-package me.crylonz;
+package me.crylonz.mendingEnchant;
 
-import me.crylonz.utils.MendingEnchantConfig;
-import me.crylonz.utils.MendingEnchantUpdater;
+import me.crylonz.mendingEnchant.utils.MendingEnchantConfig;
+import me.crylonz.mendingEnchant.utils.MendingEnchantUpdater;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -21,6 +21,8 @@ import java.util.logging.Logger;
 import static org.bukkit.event.player.PlayerFishEvent.State.CAUGHT_FISH;
 
 public class MendingEnchant extends JavaPlugin implements Listener {
+    // metrics don't work during testing
+    public static boolean allowMetrics = true;
 
     public final Logger log = Logger.getLogger("Minecraft");
 
@@ -29,7 +31,9 @@ public class MendingEnchant extends JavaPlugin implements Listener {
     public void onEnable() {
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvents(this, this);
-        Metrics metrics = new Metrics(this, 16292);
+        if(allowMetrics) {
+            Metrics metrics = new Metrics(this, 16292);
+        }
         this.log.info("[MendingEnchant] is enabled !");
 
         File configFile = new File(getDataFolder(), "config.yml");
@@ -92,7 +96,7 @@ public class MendingEnchant extends JavaPlugin implements Listener {
             if (randomValue <= config.getDouble("FishingProbability")) {
                 ItemStack book = new ItemStack(Material.ENCHANTED_BOOK);
                 EnchantmentStorageMeta esm = (EnchantmentStorageMeta) book.getItemMeta();
-                esm.addStoredEnchant(Enchantment.MENDING, 1, false);
+                esm.addStoredEnchant(Enchantment.MENDING, 1, true);
                 book.setItemMeta(esm);
 
                 e.getPlayer().getInventory().addItem(book);

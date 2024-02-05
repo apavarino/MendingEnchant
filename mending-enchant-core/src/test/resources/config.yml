@@ -1,0 +1,15 @@
+# DefaultProbability : Probability to have mending in percentage between 0% and 100% at enchant level 30.
+# 0% = No chance to have Mending, 100% = Mending on all enchant
+# Other enchant levels adapt to this value (if rate is set to 10% you have 5% chance to have it at level 15)
+#
+# You can also set up 3 customs probabilities : CustomProbability1 will be applied to player with permission mendingenchant.custom1
+# Same logic for CustomProbability2 and CustomProbability3
+# More information on project page : https://dev.bukkit.org/projects/mendingenchant
+#
+# YOU NEED TO RELOAD/RESTART AFTER ANY CHANGE
+auto-update: false
+DefaultProbability: 6.0
+CustomProbability1: 12.0
+CustomProbability2: 18.0
+CustomProbability3: 24.0
+FishingProbability: 100.0

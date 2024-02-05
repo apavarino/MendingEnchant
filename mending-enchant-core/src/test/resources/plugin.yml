@@ -1,0 +1,19 @@
+name: MendingEnchant
+main: me.crylonz.mendingEnchant.MendingEnchant
+version: "1.6.2"
+author: Crylonz
+description: Make possible to have mending with enchant table
+api-version: "1.13"
+permissions:
+  mendingenchant.use:
+    description: Allow player to have mending on his enchantement
+    default: true
+  mendingenchant.custom1:
+    description: Allow player to have mending on his enchantement with special probability
+    default: false
+  mendingenchant.custom2:
+    description: Allow player to have mending on his enchantement with special probability
+    default: false
+  mendingenchant.custom3:
+    description: Allow player to have mending on his enchantement with special probability
+    default: false
