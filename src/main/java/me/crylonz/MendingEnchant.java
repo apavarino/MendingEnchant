@@ -96,7 +96,7 @@ public class MendingEnchant extends JavaPlugin implements Listener {
             if (randomValue <= config.getDouble("FishingProbability")) {
                 ItemStack book = new ItemStack(Material.ENCHANTED_BOOK);
                 EnchantmentStorageMeta esm = (EnchantmentStorageMeta) book.getItemMeta();
-                esm.addStoredEnchant(Enchantment.MENDING, 1, false);
+                esm.addStoredEnchant(Enchantment.MENDING, 1, true);
                 book.setItemMeta(esm);
 
                 e.getPlayer().getInventory().addItem(book);
