@@ -1,4 +1,4 @@
-package me.crylonz;
+package me.crylonz.mendingEnchant;
 
 import be.seeseemelk.mockbukkit.MockBukkit;
 import be.seeseemelk.mockbukkit.ServerMock;

@@ -1,4 +1,4 @@
-package me.crylonz.utils;
+package me.crylonz.mendingEnchant.utils;
 
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;

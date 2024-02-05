@@ -10,10 +10,8 @@ plugins {
 repositories {
     mavenCentral()
     gradlePluginPortal()
-//    maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
     maven("https://maven.enginehub.org/repo/")
-
 }
 
 java {
@@ -44,7 +42,7 @@ tasks.named<Test>("test") {
 }
 
 tasks.withType<ShadowJar> {
-    relocate("org.bstats", "me.crylonz.deadchest")
+    relocate("org.bstats", "me.crylonz.mendingEnchant")
     archiveFileName.set("mending-enchant-SNAPSHOT.jar")
 }
 
@@ -54,7 +52,7 @@ val spacePassword: String by project
 publishing {
     publications {
         create<MavenPublication>("maven") {
-            groupId = "me.crylonz"
+            groupId = "me.crylonz.mendingEnchant"
             artifactId = "mending-enchant"
             version = "1.6.3-SNAPSHOT"
             from(components["java"])
