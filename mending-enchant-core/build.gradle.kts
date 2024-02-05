@@ -42,7 +42,7 @@ tasks.named<Test>("test") {
 }
 
 tasks.withType<ShadowJar> {
-    relocate("org.bstats", "me.crylonz.mendingEnchant")
+    relocate("org.bstats", "me.crylonz.mendingenchant")
     archiveFileName.set("mending-enchant-SNAPSHOT.jar")
 }
 
@@ -52,7 +52,7 @@ val spacePassword: String by project
 publishing {
     publications {
         create<MavenPublication>("maven") {
-            groupId = "me.crylonz.mendingEnchant"
+            groupId = "me.crylonz.mendingenchant"
             artifactId = "mending-enchant"
             version = "1.6.3-SNAPSHOT"
             from(components["java"])

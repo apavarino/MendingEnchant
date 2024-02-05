@@ -1,7 +1,7 @@
-package me.crylonz.mendingEnchant;
+package me.crylonz.mendingenchant;
 
-import me.crylonz.mendingEnchant.utils.MendingEnchantConfig;
-import me.crylonz.mendingEnchant.utils.MendingEnchantUpdater;
+import me.crylonz.mendingenchant.utils.MendingEnchantConfig;
+import me.crylonz.mendingenchant.utils.MendingEnchantUpdater;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Material;
 import org.bukkit.Sound;
