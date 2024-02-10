@@ -58,26 +58,50 @@ public class MendingEnchantTest {
         Assertions.assertTrue(esm.hasStoredEnchant(Enchantment.MENDING));
     }
 
-     @Test
-     @DisplayName("Enchanting should give the mending enchant to the tool")
-     public void enchantingForMending(){
-         Player player = server.addPlayer();
-         PermissionAttachment pa = player.addAttachment(plugin);
-         pa.setPermission("mendingenchant.use", true);
+    @Test
+    @DisplayName("Enchanting should give the mending enchant to the tool")
+    public void enchantingForMending(){
+     Player player = server.addPlayer();
+     PermissionAttachment pa = player.addAttachment(plugin);
+     pa.setPermission("mendingenchant.use", true);
 
-         Map<Enchantment, Integer> enchants = new HashMap<>(); // Can't be null
+     Map<Enchantment, Integer> enchants = new HashMap<>(); // Can't be null
 
-         InventoryView view = null;     // Not what is tested here - so set to null
-         Block table = null;            // Not what is tested here - so set to null
-         ItemStack is = null;           // Not what is tested here - so set to null
-         int level = 100;               // Not what is tested here - so set to 10
-         Enchantment hint = null;       // Not what is tested here - so set to null
-         int levelHint = 10;            // Not what is tested here - so set to 10
-         int i = 1;                     // Not what is tested here - so set to 1
+     InventoryView view = null;     // Not what is tested here - so set to null
+     Block table = null;            // Not what is tested here - so set to null
+     ItemStack is = null;           // Not what is tested here - so set to null
+     int level = 100;               // Not what is tested here - so set to 10
+     Enchantment hint = null;       // Not what is tested here - so set to null
+     int levelHint = 10;            // Not what is tested here - so set to 10
+     int i = 1;                     // Not what is tested here - so set to 1
 
-         EnchantItemEvent e = new EnchantItemEvent(player, view, table, is, level, enchants, hint, levelHint, i);
-         server.getPluginManager().callEvent(e);
+     EnchantItemEvent e = new EnchantItemEvent(player, view, table, is, level, enchants, hint, levelHint, i);
+     server.getPluginManager().callEvent(e);
 
-         Assertions.assertNotNull(e.getEnchantsToAdd().get(Enchantment.MENDING));
-     }
+     Assertions.assertNotNull(e.getEnchantsToAdd().get(Enchantment.MENDING));
+    }
+
+    @Test
+    @DisplayName("Mending should not be in the enchant list if there is already Infinity")
+    public void noMendingIfInfinity() {
+        Player player = server.addPlayer();
+        PermissionAttachment pa = player.addAttachment(plugin);
+        pa.setPermission("mendingenchant.use", true);
+
+        Map<Enchantment, Integer> enchants = new HashMap<>();
+        enchants.put(Enchantment.ARROW_INFINITE, 1);
+
+        InventoryView view = null;     // Not what is tested here - so set to null
+        Block table = null;            // Not what is tested here - so set to null
+        ItemStack is = null;           // Not what is tested here - so set to null
+        int level = 100;               // Not what is tested here - so set to 10
+        Enchantment hint = null;       // Not what is tested here - so set to null
+        int levelHint = 10;            // Not what is tested here - so set to 10
+        int i = 1;                     // Not what is tested here - so set to 1
+
+        EnchantItemEvent e = new EnchantItemEvent(player, view, table, is, level, enchants, hint, levelHint, i);
+        server.getPluginManager().callEvent(e);
+
+        Assertions.assertNull(e.getEnchantsToAdd().get(Enchantment.MENDING));
+    }
 }
