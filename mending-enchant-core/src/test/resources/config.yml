@@ -8,8 +8,8 @@
 #
 # YOU NEED TO RELOAD/RESTART AFTER ANY CHANGE
 auto-update: false
-DefaultProbability: 6.0
-CustomProbability1: 12.0
-CustomProbability2: 18.0
-CustomProbability3: 24.0
+DefaultProbability: 30.0
+CustomProbability1: 30.0
+CustomProbability2: 30.0
+CustomProbability3: 30.0
 FishingProbability: 100.0

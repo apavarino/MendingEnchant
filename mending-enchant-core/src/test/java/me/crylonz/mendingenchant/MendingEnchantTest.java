@@ -13,6 +13,7 @@ import org.bukkit.event.enchantment.EnchantItemEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
+import org.bukkit.permissions.PermissionAttachment;
 import org.junit.jupiter.api.*;
 
 import java.util.UUID;
@@ -61,17 +62,22 @@ public class MendingEnchantTest {
      @DisplayName("Enchanting should give the mending enchant to the tool")
      public void enchantingForMending(){
          Player player = server.addPlayer();
-         InventoryView view = null;    // Not what is tested here - so set to null
-         Block enchantTable = null;    // Not what is tested here - so set to null
-         ItemStack is = null;          // Not what is tested here - so set to null
-         int level = 10;               // Not what is tested here - so set to 10
-         Map<Enchantment, Integer> enchants = new HashMap<Enchantment, Integer>();
-         Enchantment hint = null;      // Not what is tested here - so set to null
-         int levelHint = 10;           // Not what is tested here - so set to 10
-         int i = 1;                    // Not what is tested here - so set to 1
+         PermissionAttachment pa = player.addAttachment(plugin);
+         pa.setPermission("mendingenchant.use", true);
 
-         server.getPluginManager().callEvent(new EnchantItemEvent(player, view, enchantTable, is, level, enchants, hint, levelHint, i));
+         Map<Enchantment, Integer> enchants = new HashMap<>(); // Can't be null
 
-         Assertions.assertNotNull(enchants.get(Enchantment.MENDING));
+         InventoryView view = null;     // Not what is tested here - so set to null
+         Block table = null;            // Not what is tested here - so set to null
+         ItemStack is = null;           // Not what is tested here - so set to null
+         int level = 100;               // Not what is tested here - so set to 10
+         Enchantment hint = null;       // Not what is tested here - so set to null
+         int levelHint = 10;            // Not what is tested here - so set to 10
+         int i = 1;                     // Not what is tested here - so set to 1
+
+         EnchantItemEvent e = new EnchantItemEvent(player, view, table, is, level, enchants, hint, levelHint, i);
+         server.getPluginManager().callEvent(e);
+
+         Assertions.assertNotNull(e.getEnchantsToAdd().get(Enchantment.MENDING));
      }
 }
