@@ -1,6 +1,6 @@
 name: MendingEnchant
 main: me.crylonz.mendingenchant.MendingEnchant
-version: "1.6.2"
+version: "1.7.0"
 author: Crylonz
 description: Make possible to have mending with enchant table
 api-version: "1.13"
