@@ -26,6 +26,9 @@ import static org.bukkit.event.player.PlayerFishEvent.State.CAUGHT_FISH;
 
 public class MendingEnchant extends JavaPlugin implements Listener {
     private static final String RELOAD_PERMISSION = "mendingenchant.admin.reload";
+    private static final String INFO_PERMISSION = "mendingenchant.admin.info";
+    private static final String BYPASS_ITEM_FILTER_PERMISSION = "mendingenchant.bypass.itemfilter";
+    private static final String BYPASS_WORLD_FILTER_PERMISSION = "mendingenchant.bypass.worldfilter";
     private static final Set<String> VALID_FILTER_MODES = new HashSet<>(Arrays.asList("disabled", "whitelist", "blacklist"));
 
     // metrics don't work during testing
@@ -73,7 +76,17 @@ public class MendingEnchant extends JavaPlugin implements Listener {
             return true;
         }
 
-        sender.sendMessage(ChatColor.YELLOW + "Usage: /" + label + " reload");
+        if (args.length == 1 && args[0].equalsIgnoreCase("info")) {
+            if (!sender.hasPermission(INFO_PERMISSION)) {
+                sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
+                return true;
+            }
+
+            sendInfo(sender);
+            return true;
+        }
+
+        sender.sendMessage(ChatColor.YELLOW + "Usage: /" + label + " <reload|info>");
         return true;
     }
 
@@ -99,7 +112,9 @@ public class MendingEnchant extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onEnchantItemEvent(EnchantItemEvent e) {
-        if (e.getEnchanter().hasPermission("mendingenchant.use") && isWorldAllowed(e.getEnchanter().getLocation()) && isItemAllowedForMending(e.getItem())) {
+        if (e.getEnchanter().hasPermission("mendingenchant.use")
+                && isWorldAllowed(e.getEnchanter(), e.getEnchanter().getLocation())
+                && isItemAllowedForMending(e.getEnchanter(), e.getItem())) {
             double randomValue = Math.random() * 100;
 
             double div;
@@ -122,7 +137,7 @@ public class MendingEnchant extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onFish(PlayerFishEvent e) {
-        if (e.getState() == CAUGHT_FISH && isWorldAllowed(e.getPlayer().getLocation())) {
+        if (e.getState() == CAUGHT_FISH && isWorldAllowed(e.getPlayer(), e.getPlayer().getLocation())) {
             double randomValue = Math.random() * 100;
             if (randomValue <= config.getDouble("fishing.probability")) {
                 ItemStack book = new ItemStack(Material.ENCHANTED_BOOK);
@@ -136,7 +151,11 @@ public class MendingEnchant extends JavaPlugin implements Listener {
         }
     }
 
-    private boolean isItemAllowedForMending(ItemStack item) {
+    private boolean isItemAllowedForMending(CommandSender sender, ItemStack item) {
+        if (sender.hasPermission(BYPASS_ITEM_FILTER_PERMISSION)) {
+            return true;
+        }
+
         if (item == null) {
             return true;
         }
@@ -144,7 +163,11 @@ public class MendingEnchant extends JavaPlugin implements Listener {
         return isAllowedByMode(config.getString("enchanting.item-filter.mode"), getConfiguredMaterials().contains(item.getType().name()));
     }
 
-    private boolean isWorldAllowed(Location location) {
+    private boolean isWorldAllowed(CommandSender sender, Location location) {
+        if (sender.hasPermission(BYPASS_WORLD_FILTER_PERMISSION)) {
+            return true;
+        }
+
         if (location == null || location.getWorld() == null) {
             return true;
         }
@@ -260,5 +283,26 @@ public class MendingEnchant extends JavaPlugin implements Listener {
             filteredWorlds.add(worldName.toLowerCase(Locale.ROOT));
         }
         return filteredWorlds;
+    }
+
+    private void sendInfo(CommandSender sender) {
+        sender.sendMessage(ChatColor.GOLD + "MendingEnchant " + getDescription().getVersion());
+        sender.sendMessage(ChatColor.YELLOW + "Updater: " + ChatColor.WHITE + config.getBoolean("updater.enabled"));
+        sender.sendMessage(ChatColor.YELLOW + "Enchant probabilities: " + ChatColor.WHITE
+                + "default=" + config.getDouble("enchanting.probabilities.default")
+                + ", custom1=" + config.getDouble("enchanting.probabilities.custom-permission-1")
+                + ", custom2=" + config.getDouble("enchanting.probabilities.custom-permission-2")
+                + ", custom3=" + config.getDouble("enchanting.probabilities.custom-permission-3"));
+        sender.sendMessage(ChatColor.YELLOW + "Fishing probability: " + ChatColor.WHITE + config.getDouble("fishing.probability"));
+        sender.sendMessage(ChatColor.YELLOW + "Item filter: " + ChatColor.WHITE
+                + config.getString("enchanting.item-filter.mode")
+                + " " + formatList(config.getStringList("enchanting.item-filter.materials")));
+        sender.sendMessage(ChatColor.YELLOW + "World filter: " + ChatColor.WHITE
+                + config.getString("world-filter.mode")
+                + " " + formatList(config.getStringList("world-filter.worlds")));
+    }
+
+    private String formatList(List<String> values) {
+        return values.isEmpty() ? "(none)" : values.toString();
     }
 }

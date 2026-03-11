@@ -17,6 +17,7 @@ import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.command.PluginCommand;
+import be.seeseemelk.mockbukkit.entity.PlayerMock;
 import org.junit.jupiter.api.*;
 
 import java.util.UUID;
@@ -241,6 +242,73 @@ public class MendingEnchantTest {
         Assertions.assertEquals(Collections.singletonList("DIAMOND_PICKAXE"), plugin.config.getStringList("enchanting.item-filter.materials"));
         Assertions.assertEquals("disabled", plugin.config.getString("world-filter.mode"));
         Assertions.assertEquals(Collections.singletonList("valid_world"), plugin.config.getStringList("world-filter.worlds"));
+    }
+
+    @Test
+    @DisplayName("Item filter bypass permission should ignore blacklisted items")
+    public void itemFilterBypassShouldAllowMending() {
+        plugin.getConfig().set("enchanting.item-filter.mode", "blacklist");
+        plugin.getConfig().set("enchanting.item-filter.materials", Collections.singletonList("DIAMOND_PICKAXE"));
+        plugin.saveConfig();
+
+        Player player = server.addPlayer();
+        PermissionAttachment pa = player.addAttachment(plugin);
+        pa.setPermission("mendingenchant.use", true);
+        pa.setPermission("mendingenchant.bypass.itemfilter", true);
+
+        Map<Enchantment, Integer> enchants = new HashMap<>();
+        EnchantItemEvent event = new EnchantItemEvent(player, null, null, new ItemStack(Material.DIAMOND_PICKAXE), 100, enchants, null, 10, 1);
+        server.getPluginManager().callEvent(event);
+
+        Assertions.assertNotNull(event.getEnchantsToAdd().get(Enchantment.MENDING));
+    }
+
+    @Test
+    @DisplayName("World filter bypass permission should ignore blacklisted worlds")
+    public void worldFilterBypassShouldAllowMending() {
+        World blockedWorld = server.addSimpleWorld("blocked_world");
+        Player player = server.addPlayer();
+        player.teleport(new Location(blockedWorld, 0, 64, 0));
+
+        PermissionAttachment pa = player.addAttachment(plugin);
+        pa.setPermission("mendingenchant.use", true);
+        pa.setPermission("mendingenchant.bypass.worldfilter", true);
+
+        plugin.getConfig().set("world-filter.mode", "blacklist");
+        plugin.getConfig().set("world-filter.worlds", Collections.singletonList("blocked_world"));
+        plugin.saveConfig();
+
+        Map<Enchantment, Integer> enchants = new HashMap<>();
+        EnchantItemEvent event = new EnchantItemEvent(player, null, null, new ItemStack(Material.DIAMOND_PICKAXE), 100, enchants, null, 10, 1);
+        server.getPluginManager().callEvent(event);
+
+        Assertions.assertNotNull(event.getEnchantsToAdd().get(Enchantment.MENDING));
+    }
+
+    @Test
+    @DisplayName("Info command should show the active configuration summary")
+    public void infoCommandShouldShowConfigurationSummary() {
+        PlayerMock player = server.addPlayer();
+        PermissionAttachment pa = player.addAttachment(plugin);
+        pa.setPermission("mendingenchant.admin.info", true);
+
+        plugin.getConfig().set("enchanting.item-filter.mode", "blacklist");
+        plugin.getConfig().set("enchanting.item-filter.materials", Collections.singletonList("BOW"));
+        plugin.getConfig().set("world-filter.mode", "whitelist");
+        plugin.getConfig().set("world-filter.worlds", Collections.singletonList("world"));
+        plugin.getConfig().set("fishing.probability", 42.0);
+        plugin.saveConfig();
+
+        PluginCommand command = createPluginCommand("mendingenchant");
+        boolean handled = plugin.onCommand(player, command, "mendingenchant", new String[]{"info"});
+
+        Assertions.assertTrue(handled);
+        Assertions.assertTrue(player.nextMessage().contains("MendingEnchant"));
+        Assertions.assertTrue(player.nextMessage().contains("Updater:"));
+        Assertions.assertTrue(player.nextMessage().contains("Enchant probabilities:"));
+        Assertions.assertTrue(player.nextMessage().contains("Fishing probability:"));
+        Assertions.assertTrue(player.nextMessage().contains("blacklist"));
+        Assertions.assertTrue(player.nextMessage().contains("whitelist"));
     }
 
     private PluginCommand createPluginCommand(String name) {

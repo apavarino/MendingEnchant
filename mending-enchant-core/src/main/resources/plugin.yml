@@ -25,3 +25,12 @@ permissions:
   mendingenchant.admin.reload:
     description: Allows reloading the MendingEnchant configuration
     default: op
+  mendingenchant.admin.info:
+    description: Allows viewing MendingEnchant configuration info
+    default: op
+  mendingenchant.bypass.itemfilter:
+    description: Allows bypassing the item filter
+    default: false
+  mendingenchant.bypass.worldfilter:
+    description: Allows bypassing the world filter
+    default: false
