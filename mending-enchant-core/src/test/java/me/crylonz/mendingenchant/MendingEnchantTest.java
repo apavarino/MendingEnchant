@@ -4,6 +4,8 @@ import be.seeseemelk.mockbukkit.MockBukkit;
 import be.seeseemelk.mockbukkit.ServerMock;
 import be.seeseemelk.mockbukkit.entity.FishHookMock;
 import org.bukkit.Material;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.FishHook;
@@ -43,6 +45,8 @@ public class MendingEnchantTest {
     public void resetConfig() {
         plugin.getConfig().set("enchanting.item-filter.mode", "disabled");
         plugin.getConfig().set("enchanting.item-filter.materials", Collections.emptyList());
+        plugin.getConfig().set("world-filter.mode", "disabled");
+        plugin.getConfig().set("world-filter.worlds", Collections.emptyList());
         plugin.getConfig().set("fishing.probability", 100.0);
         plugin.saveConfig();
     }
@@ -174,6 +178,50 @@ public class MendingEnchantTest {
 
         Assertions.assertTrue(handled);
         Assertions.assertEquals(25.0, plugin.config.getDouble("fishing.probability"));
+    }
+
+    @Test
+    @DisplayName("Mending should not be added in blacklisted worlds")
+    public void noMendingInBlacklistedWorld() {
+        World blockedWorld = server.addSimpleWorld("blocked_world");
+        Player player = server.addPlayer();
+        player.teleport(new Location(blockedWorld, 0, 64, 0));
+
+        PermissionAttachment pa = player.addAttachment(plugin);
+        pa.setPermission("mendingenchant.use", true);
+
+        plugin.getConfig().set("world-filter.mode", "blacklist");
+        plugin.getConfig().set("world-filter.worlds", Collections.singletonList("blocked_world"));
+        plugin.saveConfig();
+
+        Map<Enchantment, Integer> enchants = new HashMap<>();
+        EnchantItemEvent event = new EnchantItemEvent(player, null, null, new ItemStack(Material.DIAMOND_PICKAXE), 100, enchants, null, 10, 1);
+        server.getPluginManager().callEvent(event);
+
+        Assertions.assertNull(event.getEnchantsToAdd().get(Enchantment.MENDING));
+    }
+
+    @Test
+    @DisplayName("Fishing should only give mending books in whitelisted worlds")
+    public void fishingOnlyInWhitelistedWorlds() {
+        World allowedWorld = server.getWorlds().get(0);
+        World blockedWorld = server.addSimpleWorld("blocked_world");
+
+        Player blockedPlayer = server.addPlayer("blocked");
+        blockedPlayer.teleport(new Location(blockedWorld, 0, 64, 0));
+
+        Player allowedPlayer = server.addPlayer("allowed");
+        allowedPlayer.teleport(new Location(allowedWorld, 0, 64, 0));
+
+        plugin.getConfig().set("world-filter.mode", "whitelist");
+        plugin.getConfig().set("world-filter.worlds", Collections.singletonList(allowedWorld.getName()));
+        plugin.saveConfig();
+
+        server.getPluginManager().callEvent(new PlayerFishEvent(blockedPlayer, null, new FishHookMock(server, new UUID(3, 4)), PlayerFishEvent.State.CAUGHT_FISH));
+        server.getPluginManager().callEvent(new PlayerFishEvent(allowedPlayer, null, new FishHookMock(server, new UUID(5, 6)), PlayerFishEvent.State.CAUGHT_FISH));
+
+        Assertions.assertNull(blockedPlayer.getInventory().getItem(0));
+        Assertions.assertNotNull(allowedPlayer.getInventory().getItem(0));
     }
 
     private PluginCommand createPluginCommand(String name) {

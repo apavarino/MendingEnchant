@@ -4,6 +4,7 @@ import me.crylonz.mendingenchant.utils.MendingEnchantConfig;
 import me.crylonz.mendingenchant.utils.MendingEnchantUpdater;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.command.Command;
@@ -86,6 +87,8 @@ public class MendingEnchant extends JavaPlugin implements Listener {
         config.register("enchanting.probabilities.custom-permission-3", "CustomProbability3", 24.0);
         config.register("enchanting.item-filter.mode", "disabled");
         config.register("enchanting.item-filter.materials", java.util.Collections.emptyList());
+        config.register("world-filter.mode", "disabled");
+        config.register("world-filter.worlds", java.util.Collections.emptyList());
         config.register("fishing.probability", "FishingProbability", 5.0);
     }
 
@@ -97,7 +100,7 @@ public class MendingEnchant extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onEnchantItemEvent(EnchantItemEvent e) {
-        if (e.getEnchanter().hasPermission("mendingenchant.use") && isItemAllowedForMending(e.getItem())) {
+        if (e.getEnchanter().hasPermission("mendingenchant.use") && isWorldAllowed(e.getEnchanter().getLocation()) && isItemAllowedForMending(e.getItem())) {
             double randomValue = Math.random() * 100;
 
             double div;
@@ -120,7 +123,7 @@ public class MendingEnchant extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onFish(PlayerFishEvent e) {
-        if (e.getState() == CAUGHT_FISH) {
+        if (e.getState() == CAUGHT_FISH && isWorldAllowed(e.getPlayer().getLocation())) {
             double randomValue = Math.random() * 100;
             if (randomValue <= config.getDouble("fishing.probability")) {
                 ItemStack book = new ItemStack(Material.ENCHANTED_BOOK);
@@ -139,17 +142,32 @@ public class MendingEnchant extends JavaPlugin implements Listener {
             return true;
         }
 
-        String mode = config.getString("enchanting.item-filter.mode");
-        if (mode == null) {
-            return true;
-        }
-
         Set<String> filteredMaterials = new HashSet<>();
         for (String materialName : config.getStringList("enchanting.item-filter.materials")) {
             filteredMaterials.add(materialName.toUpperCase(Locale.ROOT));
         }
 
-        boolean listed = filteredMaterials.contains(item.getType().name());
+        return isAllowedByMode(config.getString("enchanting.item-filter.mode"), filteredMaterials.contains(item.getType().name()));
+    }
+
+    private boolean isWorldAllowed(Location location) {
+        if (location == null || location.getWorld() == null) {
+            return true;
+        }
+
+        Set<String> filteredWorlds = new HashSet<>();
+        for (String worldName : config.getStringList("world-filter.worlds")) {
+            filteredWorlds.add(worldName.toLowerCase(Locale.ROOT));
+        }
+
+        return isAllowedByMode(config.getString("world-filter.mode"), filteredWorlds.contains(location.getWorld().getName().toLowerCase(Locale.ROOT)));
+    }
+
+    private boolean isAllowedByMode(String mode, boolean listed) {
+        if (mode == null) {
+            return true;
+        }
+
         switch (mode.toLowerCase(Locale.ROOT)) {
             case "whitelist":
                 return listed;

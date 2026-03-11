@@ -12,5 +12,9 @@ enchanting:
     mode: disabled
     materials: []
 
+world-filter:
+  mode: disabled
+  worlds: []
+
 fishing:
   probability: 100.0

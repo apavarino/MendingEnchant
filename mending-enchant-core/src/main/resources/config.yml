@@ -48,6 +48,21 @@ enchanting:
     #   - DIAMOND_PICKAXE
     materials: []
 
+world-filter:
+  # Available modes: disabled, whitelist, blacklist
+  # disabled  -> all worlds are allowed
+  # whitelist -> only listed worlds are allowed
+  # blacklist -> listed worlds are blocked
+  mode: disabled
+
+  # World names where the plugin is allowed or blocked, depending on the mode.
+  # Example:
+  # worlds:
+  #   - world
+  #   - world_nether
+  #   - mining
+  worlds: []
+
 fishing:
   # Chance to receive a Mending book while fishing.
   # Use a value between 0.0 and 100.0.
