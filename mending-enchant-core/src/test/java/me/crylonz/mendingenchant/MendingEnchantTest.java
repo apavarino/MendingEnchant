@@ -14,11 +14,14 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.permissions.PermissionAttachment;
+import org.bukkit.command.PluginCommand;
 import org.junit.jupiter.api.*;
 
 import java.util.UUID;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Collections;
+import java.lang.reflect.Constructor;
 
 public class MendingEnchantTest {
     private static ServerMock server;
@@ -39,7 +42,8 @@ public class MendingEnchantTest {
     @BeforeEach
     public void resetConfig() {
         plugin.getConfig().set("enchanting.item-filter.mode", "disabled");
-        plugin.getConfig().set("enchanting.item-filter.materials", java.util.Collections.emptyList());
+        plugin.getConfig().set("enchanting.item-filter.materials", Collections.emptyList());
+        plugin.getConfig().set("fishing.probability", 100.0);
         plugin.saveConfig();
     }
 
@@ -116,7 +120,7 @@ public class MendingEnchantTest {
     @DisplayName("Mending should not be added to blacklisted items")
     public void noMendingForBlacklistedItem() {
         plugin.getConfig().set("enchanting.item-filter.mode", "blacklist");
-        plugin.getConfig().set("enchanting.item-filter.materials", java.util.Collections.singletonList("DIAMOND_PICKAXE"));
+        plugin.getConfig().set("enchanting.item-filter.materials", Collections.singletonList("DIAMOND_PICKAXE"));
         plugin.saveConfig();
 
         Player player = server.addPlayer();
@@ -134,7 +138,7 @@ public class MendingEnchantTest {
     @DisplayName("Mending should only be added to whitelisted items")
     public void mendingOnlyForWhitelistedItem() {
         plugin.getConfig().set("enchanting.item-filter.mode", "whitelist");
-        plugin.getConfig().set("enchanting.item-filter.materials", java.util.Collections.singletonList("DIAMOND_PICKAXE"));
+        plugin.getConfig().set("enchanting.item-filter.materials", Collections.singletonList("DIAMOND_PICKAXE"));
         plugin.saveConfig();
 
         Player player = server.addPlayer();
@@ -151,5 +155,34 @@ public class MendingEnchantTest {
 
         Assertions.assertNotNull(allowedEvent.getEnchantsToAdd().get(Enchantment.MENDING));
         Assertions.assertNull(blockedEvent.getEnchantsToAdd().get(Enchantment.MENDING));
+    }
+
+    @Test
+    @DisplayName("Reload command should reload the configuration for admins")
+    public void reloadCommandShouldReloadConfig() {
+        Player player = server.addPlayer();
+        PermissionAttachment pa = player.addAttachment(plugin);
+        pa.setPermission("mendingenchant.admin.reload", true);
+
+        plugin.getConfig().set("fishing.probability", 25.0);
+        plugin.saveConfig();
+
+        plugin.getConfig().set("fishing.probability", 100.0);
+
+        PluginCommand command = createPluginCommand("mendingenchant");
+        boolean handled = plugin.onCommand(player, command, "mendingenchant", new String[]{"reload"});
+
+        Assertions.assertTrue(handled);
+        Assertions.assertEquals(25.0, plugin.config.getDouble("fishing.probability"));
+    }
+
+    private PluginCommand createPluginCommand(String name) {
+        try {
+            Constructor<PluginCommand> constructor = PluginCommand.class.getDeclaredConstructor(String.class, org.bukkit.plugin.Plugin.class);
+            constructor.setAccessible(true);
+            return constructor.newInstance(name, plugin);
+        } catch (ReflectiveOperationException exception) {
+            throw new RuntimeException(exception);
+        }
     }
 }

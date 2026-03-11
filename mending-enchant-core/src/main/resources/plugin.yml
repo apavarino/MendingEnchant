@@ -4,6 +4,11 @@ version: "1.7.0"
 author: Crylonz
 description: Make possible to have mending with enchant table
 api-version: "1.13"
+commands:
+  mendingenchant:
+    description: Main command for MendingEnchant
+    usage: /mendingenchant reload
+    aliases: [me]
 permissions:
   mendingenchant.use:
     description: Allow player to have mending on his enchantement
@@ -17,3 +22,6 @@ permissions:
   mendingenchant.custom3:
     description: Allow player to have mending on his enchantement with special probability
     default: false
+  mendingenchant.admin.reload:
+    description: Allows reloading the MendingEnchant configuration
+    default: op

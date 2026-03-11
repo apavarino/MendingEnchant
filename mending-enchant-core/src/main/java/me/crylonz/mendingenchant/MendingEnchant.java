@@ -3,8 +3,11 @@ package me.crylonz.mendingenchant;
 import me.crylonz.mendingenchant.utils.MendingEnchantConfig;
 import me.crylonz.mendingenchant.utils.MendingEnchantUpdater;
 import org.bstats.bukkit.Metrics;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -24,6 +27,8 @@ import java.util.logging.Logger;
 import static org.bukkit.event.player.PlayerFishEvent.State.CAUGHT_FISH;
 
 public class MendingEnchant extends JavaPlugin implements Listener {
+    private static final String RELOAD_PERMISSION = "mendingenchant.admin.reload";
+
     // metrics don't work during testing
     public static boolean allowMetrics = true;
 
@@ -40,8 +45,7 @@ public class MendingEnchant extends JavaPlugin implements Listener {
         this.log.info("[MendingEnchant] is enabled !");
 
         registerConfig();
-        saveDefaultConfig();
-        config.updateConfig();
+        reloadPluginConfiguration();
 
         if (config.getBoolean("updater.enabled")) {
             MendingEnchantUpdater updater = new MendingEnchantUpdater(this, 322356, this.getFile(), MendingEnchantUpdater.UpdateType.DEFAULT, true);
@@ -53,6 +57,27 @@ public class MendingEnchant extends JavaPlugin implements Listener {
         this.log.info("[MendingEnchant] is disabled !");
     }
 
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!command.getName().equalsIgnoreCase("mendingenchant")) {
+            return false;
+        }
+
+        if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
+            if (!sender.hasPermission(RELOAD_PERMISSION)) {
+                sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
+                return true;
+            }
+
+            reloadPluginConfiguration();
+            sender.sendMessage(ChatColor.GREEN + "MendingEnchant configuration reloaded.");
+            return true;
+        }
+
+        sender.sendMessage(ChatColor.YELLOW + "Usage: /" + label + " reload");
+        return true;
+    }
+
     public void registerConfig() {
         config.register("updater.enabled", "auto-update", true);
         config.register("enchanting.probabilities.default", "DefaultProbability", 6.0);
@@ -62,6 +87,12 @@ public class MendingEnchant extends JavaPlugin implements Listener {
         config.register("enchanting.item-filter.mode", "disabled");
         config.register("enchanting.item-filter.materials", java.util.Collections.emptyList());
         config.register("fishing.probability", "FishingProbability", 5.0);
+    }
+
+    public void reloadPluginConfiguration() {
+        reloadConfig();
+        saveDefaultConfig();
+        config.updateConfig();
     }
 
     @EventHandler
