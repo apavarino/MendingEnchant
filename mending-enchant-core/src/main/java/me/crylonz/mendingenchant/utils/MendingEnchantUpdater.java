@@ -639,16 +639,14 @@ public class MendingEnchantUpdater {
      * @return true if Updater should consider the remote version an update, false if not.
      */
     public boolean shouldUpdate(String localVersion, String remoteVersion) {
+        int versionComparison = compareVersions(localVersion, remoteVersion);
 
-        int localVersionInt = Integer.parseInt(localVersion.replace(".", ""));
-        int remoteVersionInt = Integer.parseInt(remoteVersion.replace(".", ""));
-
-        if (localVersion.charAt(0) < remoteVersion.charAt(0)) {
+        if (versionComparison < 0) {
             this.plugin.getLogger().warning("New major version (" + remoteVersion + ") is available for " + this.plugin.getName());
             this.plugin.getLogger().warning("To prevent any breaking change, this update is not downloaded automatically");
             this.plugin.getLogger().warning("Please download it manually on Bukkit/Spigot");
             return false;
-        } else if (localVersionInt > remoteVersionInt) {
+        } else if (versionComparison > 0) {
             this.plugin.getLogger().warning("-------------------");
             this.plugin.getLogger().warning("This version (" + localVersion + ") of " + this.plugin.getName() + " is not released yet");
             this.plugin.getLogger().warning("Auto update is disabled");
@@ -657,6 +655,23 @@ public class MendingEnchantUpdater {
         } else {
             return !localVersion.equalsIgnoreCase(remoteVersion);
         }
+    }
+
+    static int compareVersions(String localVersion, String remoteVersion) {
+        String[] localParts = localVersion.split("\\.");
+        String[] remoteParts = remoteVersion.split("\\.");
+        int maxLength = Math.max(localParts.length, remoteParts.length);
+
+        for (int index = 0; index < maxLength; index++) {
+            int localPart = index < localParts.length ? Integer.parseInt(localParts[index]) : 0;
+            int remotePart = index < remoteParts.length ? Integer.parseInt(remoteParts[index]) : 0;
+
+            if (localPart != remotePart) {
+                return Integer.compare(localPart, remotePart);
+            }
+        }
+
+        return 0;
     }
 
     /**

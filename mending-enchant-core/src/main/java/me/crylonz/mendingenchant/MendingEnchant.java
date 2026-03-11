@@ -16,6 +16,9 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import static org.bukkit.event.player.PlayerFishEvent.State.CAUGHT_FISH;
@@ -36,17 +39,11 @@ public class MendingEnchant extends JavaPlugin implements Listener {
         }
         this.log.info("[MendingEnchant] is enabled !");
 
-        File configFile = new File(getDataFolder(), "config.yml");
-
         registerConfig();
+        saveDefaultConfig();
+        config.updateConfig();
 
-        if (!configFile.exists()) {
-            saveDefaultConfig();
-        } else {
-            config.updateConfig();
-        }
-
-        if (config.getBoolean("auto-update")) {
+        if (config.getBoolean("updater.enabled")) {
             MendingEnchantUpdater updater = new MendingEnchantUpdater(this, 322356, this.getFile(), MendingEnchantUpdater.UpdateType.DEFAULT, true);
         }
 
@@ -57,29 +54,30 @@ public class MendingEnchant extends JavaPlugin implements Listener {
     }
 
     public void registerConfig() {
-        config.register("auto-update", true);
-        config.register("DefaultProbability", 6.0);
-        config.register("CustomProbability1", 12.0);
-        config.register("CustomProbability2", 18.0);
-        config.register("CustomProbability3", 24.0);
-        config.register("FishingProbability", 5.0);
+        config.register("updater.enabled", "auto-update", true);
+        config.register("enchanting.probabilities.default", "DefaultProbability", 6.0);
+        config.register("enchanting.probabilities.custom-permission-1", "CustomProbability1", 12.0);
+        config.register("enchanting.probabilities.custom-permission-2", "CustomProbability2", 18.0);
+        config.register("enchanting.probabilities.custom-permission-3", "CustomProbability3", 24.0);
+        config.register("enchanting.item-filter.mode", "disabled");
+        config.register("enchanting.item-filter.materials", java.util.Collections.emptyList());
+        config.register("fishing.probability", "FishingProbability", 5.0);
     }
 
     @EventHandler
     public void onEnchantItemEvent(EnchantItemEvent e) {
-
-        if (e.getEnchanter().hasPermission("mendingenchant.use")) {
+        if (e.getEnchanter().hasPermission("mendingenchant.use") && isItemAllowedForMending(e.getItem())) {
             double randomValue = Math.random() * 100;
 
             double div;
             if (e.getEnchanter().hasPermission("mendingenchant.custom1"))
-                div = 30 / config.getDouble("CustomProbability1");
+                div = 30 / config.getDouble("enchanting.probabilities.custom-permission-1");
             else if (e.getEnchanter().hasPermission("mendingenchant.custom2"))
-                div = 30 / config.getDouble("CustomProbability2");
+                div = 30 / config.getDouble("enchanting.probabilities.custom-permission-2");
             else if (e.getEnchanter().hasPermission("mendingenchant.custom3"))
-                div = 30 / config.getDouble("CustomProbability3");
+                div = 30 / config.getDouble("enchanting.probabilities.custom-permission-3");
             else
-                div = 30 / config.getDouble("DefaultProbability");
+                div = 30 / config.getDouble("enchanting.probabilities.default");
 
             randomValue += e.getExpLevelCost() / div;
 
@@ -93,7 +91,7 @@ public class MendingEnchant extends JavaPlugin implements Listener {
     public void onFish(PlayerFishEvent e) {
         if (e.getState() == CAUGHT_FISH) {
             double randomValue = Math.random() * 100;
-            if (randomValue <= config.getDouble("FishingProbability")) {
+            if (randomValue <= config.getDouble("fishing.probability")) {
                 ItemStack book = new ItemStack(Material.ENCHANTED_BOOK);
                 EnchantmentStorageMeta esm = (EnchantmentStorageMeta) book.getItemMeta();
                 esm.addStoredEnchant(Enchantment.MENDING, 1, true);
@@ -104,4 +102,31 @@ public class MendingEnchant extends JavaPlugin implements Listener {
             }
         }
     }
-} 
+
+    private boolean isItemAllowedForMending(ItemStack item) {
+        if (item == null) {
+            return true;
+        }
+
+        String mode = config.getString("enchanting.item-filter.mode");
+        if (mode == null) {
+            return true;
+        }
+
+        Set<String> filteredMaterials = new HashSet<>();
+        for (String materialName : config.getStringList("enchanting.item-filter.materials")) {
+            filteredMaterials.add(materialName.toUpperCase(Locale.ROOT));
+        }
+
+        boolean listed = filteredMaterials.contains(item.getType().name());
+        switch (mode.toLowerCase(Locale.ROOT)) {
+            case "whitelist":
+                return listed;
+            case "blacklist":
+                return !listed;
+            case "disabled":
+            default:
+                return true;
+        }
+    }
+}

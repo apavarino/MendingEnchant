@@ -36,10 +36,17 @@ public class MendingEnchantTest {
         MockBukkit.unmock();
     }
 
+    @BeforeEach
+    public void resetConfig() {
+        plugin.getConfig().set("enchanting.item-filter.mode", "disabled");
+        plugin.getConfig().set("enchanting.item-filter.materials", java.util.Collections.emptyList());
+        plugin.saveConfig();
+    }
+
     @Test
     @DisplayName("Fishing probability should be set at 100% for the tests")
     public void checkFishingProbability(){
-        double fishingProba = plugin.config.getDouble("FishingProbability");
+        double fishingProba = plugin.config.getDouble("fishing.probability");
         Assertions.assertEquals(fishingProba, 100.0);
     }
 
@@ -69,7 +76,7 @@ public class MendingEnchantTest {
 
      InventoryView view = null;     // Not what is tested here - so set to null
      Block table = null;            // Not what is tested here - so set to null
-     ItemStack is = null;           // Not what is tested here - so set to null
+     ItemStack is = new ItemStack(Material.DIAMOND_PICKAXE);
      int level = 100;               // Not what is tested here - so set to 10
      Enchantment hint = null;       // Not what is tested here - so set to null
      int levelHint = 10;            // Not what is tested here - so set to 10
@@ -93,7 +100,7 @@ public class MendingEnchantTest {
 
         InventoryView view = null;     // Not what is tested here - so set to null
         Block table = null;            // Not what is tested here - so set to null
-        ItemStack is = null;           // Not what is tested here - so set to null
+        ItemStack is = new ItemStack(Material.BOW);
         int level = 100;               // Not what is tested here - so set to 10
         Enchantment hint = null;       // Not what is tested here - so set to null
         int levelHint = 10;            // Not what is tested here - so set to 10
@@ -103,5 +110,46 @@ public class MendingEnchantTest {
         server.getPluginManager().callEvent(e);
 
         Assertions.assertNull(e.getEnchantsToAdd().get(Enchantment.MENDING));
+    }
+
+    @Test
+    @DisplayName("Mending should not be added to blacklisted items")
+    public void noMendingForBlacklistedItem() {
+        plugin.getConfig().set("enchanting.item-filter.mode", "blacklist");
+        plugin.getConfig().set("enchanting.item-filter.materials", java.util.Collections.singletonList("DIAMOND_PICKAXE"));
+        plugin.saveConfig();
+
+        Player player = server.addPlayer();
+        PermissionAttachment pa = player.addAttachment(plugin);
+        pa.setPermission("mendingenchant.use", true);
+
+        Map<Enchantment, Integer> enchants = new HashMap<>();
+        EnchantItemEvent e = new EnchantItemEvent(player, null, null, new ItemStack(Material.DIAMOND_PICKAXE), 100, enchants, null, 10, 1);
+        server.getPluginManager().callEvent(e);
+
+        Assertions.assertNull(e.getEnchantsToAdd().get(Enchantment.MENDING));
+    }
+
+    @Test
+    @DisplayName("Mending should only be added to whitelisted items")
+    public void mendingOnlyForWhitelistedItem() {
+        plugin.getConfig().set("enchanting.item-filter.mode", "whitelist");
+        plugin.getConfig().set("enchanting.item-filter.materials", java.util.Collections.singletonList("DIAMOND_PICKAXE"));
+        plugin.saveConfig();
+
+        Player player = server.addPlayer();
+        PermissionAttachment pa = player.addAttachment(plugin);
+        pa.setPermission("mendingenchant.use", true);
+
+        Map<Enchantment, Integer> pickaxeEnchants = new HashMap<>();
+        EnchantItemEvent allowedEvent = new EnchantItemEvent(player, null, null, new ItemStack(Material.DIAMOND_PICKAXE), 100, pickaxeEnchants, null, 10, 1);
+        server.getPluginManager().callEvent(allowedEvent);
+
+        Map<Enchantment, Integer> swordEnchants = new HashMap<>();
+        EnchantItemEvent blockedEvent = new EnchantItemEvent(player, null, null, new ItemStack(Material.DIAMOND_SWORD), 100, swordEnchants, null, 10, 1);
+        server.getPluginManager().callEvent(blockedEvent);
+
+        Assertions.assertNotNull(allowedEvent.getEnchantsToAdd().get(Enchantment.MENDING));
+        Assertions.assertNull(blockedEvent.getEnchantsToAdd().get(Enchantment.MENDING));
     }
 }

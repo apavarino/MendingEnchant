@@ -1,73 +1,114 @@
 package me.crylonz.mendingenchant.utils;
 
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
 
-import java.io.File;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MendingEnchantConfig {
 
     private final Plugin plugin;
-    private static final HashMap<String, Object> configData = new HashMap<>();
-    private final FileConfiguration configuration = YamlConfiguration.loadConfiguration(new File("config.yml"));
+    private final Map<String, ConfigEntry> entries = new LinkedHashMap<>();
 
     public MendingEnchantConfig(Plugin plugin) {
         this.plugin = plugin;
     }
 
     public void register(String key, Object defaultValue) {
-        configData.put(key, getFromConfig(key, defaultValue));
+        register(key, null, defaultValue);
+    }
+
+    public void register(String key, String legacyKey, Object defaultValue) {
+        entries.put(key, new ConfigEntry(key, legacyKey, defaultValue));
+        plugin.getConfig().addDefault(key, defaultValue);
     }
 
     public Boolean getBoolean(String key) {
-        return (Boolean) configData.get(key);
+        return plugin.getConfig().getBoolean(key, (Boolean) getDefaultValue(key));
     }
 
     public double getDouble(String key) {
-        return (double) configData.get(key);
+        Object defaultValue = getDefaultValue(key);
+        return plugin.getConfig().getDouble(key, defaultValue instanceof Number ? ((Number) defaultValue).doubleValue() : 0.0D);
     }
 
-    public int getInt(String key) {return (int) configData.get(key);}
+    public int getInt(String key) {
+        Object defaultValue = getDefaultValue(key);
+        return plugin.getConfig().getInt(key, defaultValue instanceof Number ? ((Number) defaultValue).intValue() : 0);
+    }
 
-    private Object getFromConfig(String paramName, Object defaultValue) {
-        Object param = plugin.getConfig().get(paramName);
-        if (param != null) {
-            return param;
-        } else {
-            return defaultValue;
+    public String getString(String key) {
+        Object defaultValue = getDefaultValue(key);
+        return plugin.getConfig().getString(key, defaultValue == null ? null : defaultValue.toString());
+    }
+
+    public List<String> getStringList(String key) {
+        Object defaultValue = getDefaultValue(key);
+        if (defaultValue instanceof List<?>) {
+            @SuppressWarnings("unchecked")
+            List<String> defaultList = (List<String>) defaultValue;
+            return plugin.getConfig().getStringList(key).isEmpty() ? defaultList : plugin.getConfig().getStringList(key);
         }
-    }
 
-    private boolean detectMissingConfigs() {
-        plugin.reloadConfig();
-        return configData.keySet()
-                .stream()
-                .anyMatch(key -> !plugin.getConfig().getKeys(true).contains(key));
+        return plugin.getConfig().getStringList(key);
     }
 
     public void updateConfig() {
-        if (detectMissingConfigs()) {
-            plugin.getLogger().warning("Missing configuration found");
-            plugin.getLogger().warning("Updating config.yml with missing parameters");
+        plugin.reloadConfig();
 
-            File file = new File(plugin.getDataFolder().getAbsolutePath() + File.separator + "config.yml");
-            file.delete();
-            plugin.saveDefaultConfig();
+        boolean changed = false;
+        for (ConfigEntry entry : entries.values()) {
+            Object currentValue = resolveValue(entry);
+            if (!plugin.getConfig().contains(entry.key)) {
+                plugin.getConfig().set(entry.key, currentValue);
+                changed = true;
+            }
 
-            configData.entrySet()
-                    .stream()
-                    .filter(config -> plugin.getConfig().get(config.getKey()) != null)
-                    .forEach(config -> {
-                        plugin.getConfig().set(config.getKey(), config.getValue());
-                    });
+            if (entry.legacyKey != null && plugin.getConfig().contains(entry.legacyKey)) {
+                plugin.getConfig().set(entry.legacyKey, null);
+                changed = true;
+            }
+        }
 
+        plugin.getConfig().options().copyDefaults(true);
+        if (changed) {
+            plugin.getLogger().info("Updating config.yml to the latest format");
             plugin.saveConfig();
         }
     }
 
     public FileConfiguration getConfiguration() {
-        return configuration;
+        return plugin.getConfig();
+    }
+
+    private Object resolveValue(ConfigEntry entry) {
+        if (plugin.getConfig().contains(entry.key)) {
+            return plugin.getConfig().get(entry.key);
+        }
+
+        if (entry.legacyKey != null && plugin.getConfig().contains(entry.legacyKey)) {
+            return plugin.getConfig().get(entry.legacyKey);
+        }
+
+        return entry.defaultValue;
+    }
+
+    private Object getDefaultValue(String key) {
+        ConfigEntry entry = entries.get(key);
+        return entry == null ? null : entry.defaultValue;
+    }
+
+    private static final class ConfigEntry {
+        private final String key;
+        private final String legacyKey;
+        private final Object defaultValue;
+
+        private ConfigEntry(String key, String legacyKey, Object defaultValue) {
+            this.key = key;
+            this.legacyKey = legacyKey;
+            this.defaultValue = defaultValue;
+        }
     }
 }
