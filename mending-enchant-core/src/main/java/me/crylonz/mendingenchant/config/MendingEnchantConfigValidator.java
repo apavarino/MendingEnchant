@@ -26,6 +26,13 @@ public class MendingEnchantConfigValidator {
         boolean changed = false;
         changed |= validateFilterMode("enchanting.item-filter.mode");
         changed |= validateFilterMode("world-filter.mode");
+        changed |= validateLocalizationLocale();
+        changed |= validateProbability("fishing.probability");
+        changed |= validateProbability("enchanting.probabilities.default");
+        changed |= validateProbability("enchanting.probabilities.custom-permission-1");
+        changed |= validateProbability("enchanting.probabilities.custom-permission-2");
+        changed |= validateProbability("enchanting.probabilities.custom-permission-3");
+        changed |= validatePityValues();
         changed |= validateConfiguredMaterials();
         changed |= validateConfiguredWorlds();
 
@@ -98,5 +105,49 @@ public class MendingEnchantConfigValidator {
         }
 
         return false;
+    }
+
+    private boolean validateLocalizationLocale() {
+        String locale = config.getString("localization.locale");
+        if (locale == null || locale.trim().isEmpty()) {
+            plugin.getLogger().warning("Missing locale in 'localization.locale'. Falling back to 'en_US'.");
+            plugin.getConfig().set("localization.locale", "en_US");
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean validateProbability(String path) {
+        double value = config.getDouble(path);
+        double clamped = Math.max(0.0, Math.min(100.0, value));
+        if (value != clamped) {
+            plugin.getLogger().warning("Invalid probability '" + value + "' at '" + path + "'. Clamping to " + clamped + ".");
+            plugin.getConfig().set(path, clamped);
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean validatePityValues() {
+        boolean changed = false;
+
+        double bonusPerFailure = config.getDouble("enchanting.pity.bonus-per-failure");
+        if (bonusPerFailure < 0.0) {
+            plugin.getLogger().warning("Invalid pity bonus-per-failure '" + bonusPerFailure + "'. Falling back to 0.0.");
+            plugin.getConfig().set("enchanting.pity.bonus-per-failure", 0.0);
+            changed = true;
+        }
+
+        double maxBonus = config.getDouble("enchanting.pity.max-bonus");
+        double normalizedMaxBonus = Math.max(0.0, Math.min(100.0, maxBonus));
+        if (maxBonus != normalizedMaxBonus) {
+            plugin.getLogger().warning("Invalid pity max-bonus '" + maxBonus + "'. Clamping to " + normalizedMaxBonus + ".");
+            plugin.getConfig().set("enchanting.pity.max-bonus", normalizedMaxBonus);
+            changed = true;
+        }
+
+        return changed;
     }
 }

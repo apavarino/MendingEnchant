@@ -28,4 +28,23 @@ public class MendingEnchantConfigValidationTest extends MendingEnchantTestBase {
         Assertions.assertEquals("disabled", plugin.config.getString("world-filter.mode"));
         Assertions.assertEquals(Collections.singletonList("valid_world"), plugin.config.getStringList("world-filter.worlds"));
     }
+
+    @Test
+    @DisplayName("Reload should sanitize invalid pity and probability values")
+    public void reloadShouldSanitizePityAndProbabilities() {
+        plugin.getConfig().set("localization.locale", "");
+        plugin.getConfig().set("fishing.probability", 150.0);
+        plugin.getConfig().set("enchanting.probabilities.default", -10.0);
+        plugin.getConfig().set("enchanting.pity.bonus-per-failure", -5.0);
+        plugin.getConfig().set("enchanting.pity.max-bonus", 250.0);
+        plugin.saveConfig();
+
+        plugin.reloadPluginConfiguration();
+
+        Assertions.assertEquals("en_US", plugin.config.getString("localization.locale"));
+        Assertions.assertEquals(100.0, plugin.config.getDouble("fishing.probability"));
+        Assertions.assertEquals(0.0, plugin.config.getDouble("enchanting.probabilities.default"));
+        Assertions.assertEquals(0.0, plugin.config.getDouble("enchanting.pity.bonus-per-failure"));
+        Assertions.assertEquals(100.0, plugin.config.getDouble("enchanting.pity.max-bonus"));
+    }
 }

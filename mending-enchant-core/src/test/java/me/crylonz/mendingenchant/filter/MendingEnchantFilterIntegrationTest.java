@@ -256,4 +256,106 @@ public class MendingEnchantFilterIntegrationTest extends MendingEnchantTestBase 
         Assertions.assertNull(thirdEvent.getEnchantsToAdd().get(Enchantment.MENDING));
         Assertions.assertEquals(1, plugin.pity.getFailures(player.getUniqueId()));
     }
+
+    @Test
+    @DisplayName("Pity system should do nothing when disabled")
+    public void pitySystemShouldDoNothingWhenDisabled() {
+        Player player = server.addPlayer();
+        PermissionAttachment attachment = player.addAttachment(plugin);
+        attachment.setPermission("mendingenchant.use", true);
+
+        plugin.getConfig().set("enchanting.probabilities.default", 6.0);
+        plugin.getConfig().set("enchanting.pity.enabled", false);
+        plugin.saveConfig();
+        plugin.random.setRandomSupplier(() -> 85.0);
+
+        EnchantItemEvent firstEvent = new EnchantItemEvent(player, null, null, new ItemStack(Material.DIAMOND_PICKAXE), 30, new HashMap<>(), null, 10, 1);
+        server.getPluginManager().callEvent(firstEvent);
+
+        EnchantItemEvent secondEvent = new EnchantItemEvent(player, null, null, new ItemStack(Material.DIAMOND_PICKAXE), 30, new HashMap<>(), null, 10, 1);
+        server.getPluginManager().callEvent(secondEvent);
+
+        Assertions.assertNull(firstEvent.getEnchantsToAdd().get(Enchantment.MENDING));
+        Assertions.assertNull(secondEvent.getEnchantsToAdd().get(Enchantment.MENDING));
+        Assertions.assertEquals(0, plugin.pity.getFailures(player.getUniqueId()));
+    }
+
+    @Test
+    @DisplayName("Pity system should cap the accumulated bonus at max bonus")
+    public void pitySystemShouldCapAtMaxBonus() {
+        Player player = server.addPlayer();
+        PermissionAttachment attachment = player.addAttachment(plugin);
+        attachment.setPermission("mendingenchant.use", true);
+
+        plugin.getConfig().set("enchanting.probabilities.default", 6.0);
+        plugin.getConfig().set("enchanting.pity.enabled", true);
+        plugin.getConfig().set("enchanting.pity.bonus-per-failure", 10.0);
+        plugin.getConfig().set("enchanting.pity.max-bonus", 30.0);
+        plugin.saveConfig();
+        plugin.random.setRandomSupplier(() -> 69.0);
+
+        server.getPluginManager().callEvent(new EnchantItemEvent(player, null, null, new ItemStack(Material.DIAMOND_PICKAXE), 30, new HashMap<>(), null, 10, 1));
+        server.getPluginManager().callEvent(new EnchantItemEvent(player, null, null, new ItemStack(Material.DIAMOND_PICKAXE), 30, new HashMap<>(), null, 10, 1));
+        server.getPluginManager().callEvent(new EnchantItemEvent(player, null, null, new ItemStack(Material.DIAMOND_PICKAXE), 30, new HashMap<>(), null, 10, 1));
+
+        Assertions.assertEquals(30.0, plugin.pity.getBonus(player.getUniqueId()));
+
+        EnchantItemEvent fourthEvent = new EnchantItemEvent(player, null, null, new ItemStack(Material.DIAMOND_PICKAXE), 30, new HashMap<>(), null, 10, 1);
+        server.getPluginManager().callEvent(fourthEvent);
+
+        Assertions.assertNotNull(fourthEvent.getEnchantsToAdd().get(Enchantment.MENDING));
+    }
+
+    @Test
+    @DisplayName("Pity system should track failures independently per player")
+    public void pitySystemShouldTrackPlayersIndependently() {
+        Player firstPlayer = server.addPlayer("first");
+        Player secondPlayer = server.addPlayer("second");
+
+        PermissionAttachment firstAttachment = firstPlayer.addAttachment(plugin);
+        firstAttachment.setPermission("mendingenchant.use", true);
+
+        PermissionAttachment secondAttachment = secondPlayer.addAttachment(plugin);
+        secondAttachment.setPermission("mendingenchant.use", true);
+
+        plugin.getConfig().set("enchanting.probabilities.default", 6.0);
+        plugin.getConfig().set("enchanting.pity.enabled", true);
+        plugin.getConfig().set("enchanting.pity.bonus-per-failure", 20.0);
+        plugin.getConfig().set("enchanting.pity.max-bonus", 40.0);
+        plugin.saveConfig();
+        plugin.random.setRandomSupplier(() -> 85.0);
+
+        server.getPluginManager().callEvent(new EnchantItemEvent(firstPlayer, null, null, new ItemStack(Material.DIAMOND_PICKAXE), 30, new HashMap<>(), null, 10, 1));
+
+        Assertions.assertEquals(1, plugin.pity.getFailures(firstPlayer.getUniqueId()));
+        Assertions.assertEquals(0, plugin.pity.getFailures(secondPlayer.getUniqueId()));
+
+        EnchantItemEvent secondPlayerEvent = new EnchantItemEvent(secondPlayer, null, null, new ItemStack(Material.DIAMOND_PICKAXE), 30, new HashMap<>(), null, 10, 1);
+        server.getPluginManager().callEvent(secondPlayerEvent);
+
+        Assertions.assertNull(secondPlayerEvent.getEnchantsToAdd().get(Enchantment.MENDING));
+        Assertions.assertEquals(1, plugin.pity.getFailures(secondPlayer.getUniqueId()));
+    }
+
+    @Test
+    @DisplayName("Pity system state should reset on plugin reload")
+    public void pitySystemStateShouldResetOnReload() {
+        Player player = server.addPlayer();
+        PermissionAttachment attachment = player.addAttachment(plugin);
+        attachment.setPermission("mendingenchant.use", true);
+
+        plugin.getConfig().set("enchanting.probabilities.default", 6.0);
+        plugin.getConfig().set("enchanting.pity.enabled", true);
+        plugin.getConfig().set("enchanting.pity.bonus-per-failure", 20.0);
+        plugin.getConfig().set("enchanting.pity.max-bonus", 40.0);
+        plugin.saveConfig();
+        plugin.random.setRandomSupplier(() -> 85.0);
+
+        server.getPluginManager().callEvent(new EnchantItemEvent(player, null, null, new ItemStack(Material.DIAMOND_PICKAXE), 30, new HashMap<>(), null, 10, 1));
+        Assertions.assertEquals(1, plugin.pity.getFailures(player.getUniqueId()));
+
+        plugin.reloadPluginConfiguration();
+
+        Assertions.assertEquals(0, plugin.pity.getFailures(player.getUniqueId()));
+    }
 }

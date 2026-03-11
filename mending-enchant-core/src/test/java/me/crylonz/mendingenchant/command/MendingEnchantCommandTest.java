@@ -74,6 +74,20 @@ public class MendingEnchantCommandTest extends MendingEnchantTestBase {
     }
 
     @Test
+    @DisplayName("Tab completion should only suggest commands allowed for the sender")
+    public void tabCompletionShouldRespectPermissions() {
+        PlayerMock player = server.addPlayer();
+        PermissionAttachment attachment = player.addAttachment(plugin);
+        attachment.setPermission(MendingEnchantCommandHandler.INFO_PERMISSION, true);
+
+        PluginCommand command = createPluginCommand("mendingenchant");
+        List<String> completions = plugin.onTabComplete(player, command, "mendingenchant", new String[]{""});
+
+        Assertions.assertFalse(completions.contains("reload"));
+        Assertions.assertTrue(completions.contains("info"));
+    }
+
+    @Test
     @DisplayName("Command should use configurable no permission message")
     public void commandShouldUseNoPermissionMessage() {
         PlayerMock player = server.addPlayer();
@@ -83,5 +97,29 @@ public class MendingEnchantCommandTest extends MendingEnchantTestBase {
 
         Assertions.assertTrue(handled);
         Assertions.assertTrue(player.nextMessage().contains("do not have permission"));
+    }
+
+    @Test
+    @DisplayName("Info command should be denied without permission")
+    public void infoCommandShouldRequirePermission() {
+        PlayerMock player = server.addPlayer();
+
+        PluginCommand command = createPluginCommand("mendingenchant");
+        boolean handled = plugin.onCommand(player, command, "mendingenchant", new String[]{"info"});
+
+        Assertions.assertTrue(handled);
+        Assertions.assertTrue(player.nextMessage().contains("do not have permission"));
+    }
+
+    @Test
+    @DisplayName("Invalid command usage should show usage message")
+    public void invalidUsageShouldShowUsageMessage() {
+        PlayerMock player = server.addPlayer();
+
+        PluginCommand command = createPluginCommand("mendingenchant");
+        boolean handled = plugin.onCommand(player, command, "mendingenchant", new String[]{"unknown"});
+
+        Assertions.assertTrue(handled);
+        Assertions.assertTrue(player.nextMessage().contains("Usage: /mendingenchant <reload|info>"));
     }
 }
