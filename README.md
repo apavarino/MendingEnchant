@@ -6,6 +6,7 @@
     <img src="http://cf.way2muchnoise.eu/full_322356_downloads.svg" alt="download"/> 
     <img src="https://img.shields.io/github/license/apavarino/mendingenchant" alt="licence"/>
     <img src="https://img.shields.io/github/last-commit/apavarino/mendingenchant" alt="commit"/>
+    <img src="https://github.com/apavarino/mendingenchant/actions/workflows/ci.yml/badge.svg" alt="CI"/>
 </h2>
 
 
