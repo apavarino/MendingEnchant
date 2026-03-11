@@ -31,10 +31,15 @@ public abstract class MendingEnchantTestBase {
     public void resetConfig() {
         plugin.getConfig().set("enchanting.item-filter.mode", "disabled");
         plugin.getConfig().set("enchanting.item-filter.materials", Collections.emptyList());
+        plugin.getConfig().set("enchanting.pity.enabled", false);
+        plugin.getConfig().set("enchanting.pity.bonus-per-failure", 2.0);
+        plugin.getConfig().set("enchanting.pity.max-bonus", 30.0);
         plugin.getConfig().set("world-filter.mode", "disabled");
         plugin.getConfig().set("world-filter.worlds", Collections.emptyList());
         plugin.getConfig().set("fishing.probability", 100.0);
         plugin.saveConfig();
+        plugin.pity.reset();
+        plugin.random.reset();
     }
 
     protected PluginCommand createPluginCommand(String name) {

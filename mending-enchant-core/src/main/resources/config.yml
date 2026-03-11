@@ -36,6 +36,16 @@ enchanting:
     # mendingenchant.custom3
     custom-permission-3: 24.0
 
+  pity:
+    # Increases the chance to get Mending after repeated failures.
+    enabled: false
+
+    # Extra percentage points added after each failed enchanting attempt.
+    bonus-per-failure: 2.0
+
+    # Maximum bonus granted by the pity system.
+    max-bonus: 30.0
+
   item-filter:
     # Available modes: disabled, whitelist, blacklist
     # disabled  -> all items are allowed

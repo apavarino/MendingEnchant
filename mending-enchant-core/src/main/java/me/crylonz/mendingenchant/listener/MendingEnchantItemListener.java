@@ -25,7 +25,11 @@ public class MendingEnchantItemListener implements Listener {
             return;
         }
 
-        double randomValue = Math.random() * 100;
+        if (event.getEnchantsToAdd().get(Enchantment.ARROW_INFINITE) != null) {
+            return;
+        }
+
+        double randomValue = plugin.random.nextPercentage();
         double div;
         if (event.getEnchanter().hasPermission("mendingenchant.custom1")) {
             div = 30 / plugin.config.getDouble("enchanting.probabilities.custom-permission-1");
@@ -38,11 +42,16 @@ public class MendingEnchantItemListener implements Listener {
         }
 
         randomValue += event.getExpLevelCost() / div;
-        if (randomValue > 100 && event.getEnchantsToAdd().get(Enchantment.ARROW_INFINITE) == null) {
+        randomValue += plugin.pity.getBonus(event.getEnchanter().getUniqueId());
+
+        if (randomValue > 100) {
             event.getEnchantsToAdd().put(Enchantment.MENDING, 1);
+            plugin.pity.recordSuccess(event.getEnchanter().getUniqueId());
             ItemStack item = event.getItem();
             String itemName = item == null ? "item" : item.getType().name();
             plugin.messages.sendMendingObtained(event.getEnchanter(), "notifications.enchanting-success", itemName);
+        } else {
+            plugin.pity.recordFailure(event.getEnchanter().getUniqueId());
         }
     }
 }

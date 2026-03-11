@@ -6,6 +6,8 @@ import me.crylonz.mendingenchant.listener.MendingEnchantFishingListener;
 import me.crylonz.mendingenchant.listener.MendingEnchantItemListener;
 import me.crylonz.mendingenchant.service.MendingEnchantFilterService;
 import me.crylonz.mendingenchant.service.MendingEnchantMessageService;
+import me.crylonz.mendingenchant.service.MendingEnchantPityService;
+import me.crylonz.mendingenchant.service.MendingEnchantRandomService;
 import me.crylonz.mendingenchant.utils.MendingEnchantConfig;
 import me.crylonz.mendingenchant.utils.MendingEnchantUpdater;
 import org.bstats.bukkit.Metrics;
@@ -24,6 +26,8 @@ public class MendingEnchant extends JavaPlugin {
     public final Logger log = Logger.getLogger("Minecraft");
     public final MendingEnchantConfig config = new MendingEnchantConfig(this);
     public final MendingEnchantMessageService messages = new MendingEnchantMessageService(this);
+    public final MendingEnchantRandomService random = new MendingEnchantRandomService();
+    public final MendingEnchantPityService pity = new MendingEnchantPityService(config);
 
     private final MendingEnchantFilterService filterService = new MendingEnchantFilterService(config);
     private final MendingEnchantConfigValidator configValidator = new MendingEnchantConfigValidator(this, config);
@@ -71,6 +75,9 @@ public class MendingEnchant extends JavaPlugin {
         config.register("enchanting.probabilities.custom-permission-1", "CustomProbability1", 12.0);
         config.register("enchanting.probabilities.custom-permission-2", "CustomProbability2", 18.0);
         config.register("enchanting.probabilities.custom-permission-3", "CustomProbability3", 24.0);
+        config.register("enchanting.pity.enabled", false);
+        config.register("enchanting.pity.bonus-per-failure", 2.0);
+        config.register("enchanting.pity.max-bonus", 30.0);
         config.register("enchanting.item-filter.mode", "disabled");
         config.register("enchanting.item-filter.materials", Collections.emptyList());
         config.register("world-filter.mode", "disabled");
@@ -84,5 +91,6 @@ public class MendingEnchant extends JavaPlugin {
         config.updateConfig();
         messages.reload();
         configValidator.validate();
+        pity.reset();
     }
 }

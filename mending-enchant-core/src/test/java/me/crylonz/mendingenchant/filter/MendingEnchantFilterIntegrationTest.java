@@ -34,6 +34,7 @@ public class MendingEnchantFilterIntegrationTest extends MendingEnchantTestBase 
     @DisplayName("Fishing should give mending book")
     public void checkFishingResults() {
         PlayerMock player = server.addPlayer();
+        plugin.random.setRandomSupplier(() -> 0.0);
         server.getPluginManager().callEvent(new PlayerFishEvent(player, null, new FishHookMock(server, new UUID(1, 2)), PlayerFishEvent.State.CAUGHT_FISH));
 
         ItemStack item = player.getInventory().getItem(0);
@@ -49,6 +50,7 @@ public class MendingEnchantFilterIntegrationTest extends MendingEnchantTestBase 
         PlayerMock player = server.addPlayer();
         PermissionAttachment attachment = player.addAttachment(plugin);
         attachment.setPermission("mendingenchant.use", true);
+        plugin.random.setRandomSupplier(() -> 95.0);
 
         Map<Enchantment, Integer> enchants = new HashMap<>();
         EnchantItemEvent event = new EnchantItemEvent(player, null, null, new ItemStack(Material.DIAMOND_PICKAXE), 100, enchants, null, 10, 1);
@@ -64,6 +66,7 @@ public class MendingEnchantFilterIntegrationTest extends MendingEnchantTestBase 
         Player player = server.addPlayer();
         PermissionAttachment attachment = player.addAttachment(plugin);
         attachment.setPermission("mendingenchant.use", true);
+        plugin.random.setRandomSupplier(() -> 95.0);
 
         Map<Enchantment, Integer> enchants = new HashMap<>();
         enchants.put(Enchantment.ARROW_INFINITE, 1);
@@ -102,6 +105,7 @@ public class MendingEnchantFilterIntegrationTest extends MendingEnchantTestBase 
         Player player = server.addPlayer();
         PermissionAttachment attachment = player.addAttachment(plugin);
         attachment.setPermission("mendingenchant.use", true);
+        plugin.random.setRandomSupplier(() -> 95.0);
 
         Map<Enchantment, Integer> allowedEnchants = new HashMap<>();
         EnchantItemEvent allowedEvent = new EnchantItemEvent(player, null, null, new ItemStack(Material.DIAMOND_PICKAXE), 100, allowedEnchants, null, 10, 1);
@@ -141,6 +145,7 @@ public class MendingEnchantFilterIntegrationTest extends MendingEnchantTestBase 
     public void fishingOnlyInWhitelistedWorlds() {
         World allowedWorld = server.getWorlds().get(0);
         World blockedWorld = server.addSimpleWorld("blocked_world");
+        plugin.random.setRandomSupplier(() -> 0.0);
 
         Player blockedPlayer = server.addPlayer("blocked");
         blockedPlayer.teleport(new Location(blockedWorld, 0, 64, 0));
@@ -170,6 +175,7 @@ public class MendingEnchantFilterIntegrationTest extends MendingEnchantTestBase 
         PermissionAttachment attachment = player.addAttachment(plugin);
         attachment.setPermission("mendingenchant.use", true);
         attachment.setPermission("mendingenchant.bypass.itemfilter", true);
+        plugin.random.setRandomSupplier(() -> 95.0);
 
         Map<Enchantment, Integer> enchants = new HashMap<>();
         EnchantItemEvent event = new EnchantItemEvent(player, null, null, new ItemStack(Material.DIAMOND_PICKAXE), 100, enchants, null, 10, 1);
@@ -188,6 +194,7 @@ public class MendingEnchantFilterIntegrationTest extends MendingEnchantTestBase 
         PermissionAttachment attachment = player.addAttachment(plugin);
         attachment.setPermission("mendingenchant.use", true);
         attachment.setPermission("mendingenchant.bypass.worldfilter", true);
+        plugin.random.setRandomSupplier(() -> 95.0);
 
         plugin.getConfig().set("world-filter.mode", "blacklist");
         plugin.getConfig().set("world-filter.worlds", Collections.singletonList("blocked_world"));
@@ -198,5 +205,55 @@ public class MendingEnchantFilterIntegrationTest extends MendingEnchantTestBase 
         server.getPluginManager().callEvent(event);
 
         Assertions.assertNotNull(event.getEnchantsToAdd().get(Enchantment.MENDING));
+    }
+
+    @Test
+    @DisplayName("Pity system should increase chance after failures")
+    public void pitySystemShouldIncreaseChanceAfterFailures() {
+        PlayerMock player = server.addPlayer();
+        PermissionAttachment attachment = player.addAttachment(plugin);
+        attachment.setPermission("mendingenchant.use", true);
+
+        plugin.getConfig().set("enchanting.probabilities.default", 6.0);
+        plugin.getConfig().set("enchanting.pity.enabled", true);
+        plugin.getConfig().set("enchanting.pity.bonus-per-failure", 20.0);
+        plugin.getConfig().set("enchanting.pity.max-bonus", 40.0);
+        plugin.saveConfig();
+        plugin.random.setRandomSupplier(() -> 85.0);
+
+        EnchantItemEvent firstEvent = new EnchantItemEvent(player, null, null, new ItemStack(Material.DIAMOND_PICKAXE), 30, new HashMap<>(), null, 10, 1);
+        server.getPluginManager().callEvent(firstEvent);
+
+        EnchantItemEvent secondEvent = new EnchantItemEvent(player, null, null, new ItemStack(Material.DIAMOND_PICKAXE), 30, new HashMap<>(), null, 10, 1);
+        server.getPluginManager().callEvent(secondEvent);
+
+        Assertions.assertNull(firstEvent.getEnchantsToAdd().get(Enchantment.MENDING));
+        Assertions.assertNotNull(secondEvent.getEnchantsToAdd().get(Enchantment.MENDING));
+    }
+
+    @Test
+    @DisplayName("Pity system should reset after a success")
+    public void pitySystemShouldResetAfterSuccess() {
+        Player player = server.addPlayer();
+        PermissionAttachment attachment = player.addAttachment(plugin);
+        attachment.setPermission("mendingenchant.use", true);
+
+        plugin.getConfig().set("enchanting.probabilities.default", 6.0);
+        plugin.getConfig().set("enchanting.pity.enabled", true);
+        plugin.getConfig().set("enchanting.pity.bonus-per-failure", 20.0);
+        plugin.getConfig().set("enchanting.pity.max-bonus", 40.0);
+        plugin.saveConfig();
+        plugin.random.setRandomSupplier(() -> 85.0);
+
+        server.getPluginManager().callEvent(new EnchantItemEvent(player, null, null, new ItemStack(Material.DIAMOND_PICKAXE), 30, new HashMap<>(), null, 10, 1));
+        server.getPluginManager().callEvent(new EnchantItemEvent(player, null, null, new ItemStack(Material.DIAMOND_PICKAXE), 30, new HashMap<>(), null, 10, 1));
+
+        Assertions.assertEquals(0, plugin.pity.getFailures(player.getUniqueId()));
+
+        EnchantItemEvent thirdEvent = new EnchantItemEvent(player, null, null, new ItemStack(Material.DIAMOND_PICKAXE), 30, new HashMap<>(), null, 10, 1);
+        server.getPluginManager().callEvent(thirdEvent);
+
+        Assertions.assertNull(thirdEvent.getEnchantsToAdd().get(Enchantment.MENDING));
+        Assertions.assertEquals(1, plugin.pity.getFailures(player.getUniqueId()));
     }
 }
