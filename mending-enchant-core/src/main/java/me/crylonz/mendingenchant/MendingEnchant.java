@@ -19,16 +19,14 @@ import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.File;
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 
 import static org.bukkit.event.player.PlayerFishEvent.State.CAUGHT_FISH;
 
 public class MendingEnchant extends JavaPlugin implements Listener {
     private static final String RELOAD_PERMISSION = "mendingenchant.admin.reload";
+    private static final Set<String> VALID_FILTER_MODES = new HashSet<>(Arrays.asList("disabled", "whitelist", "blacklist"));
 
     // metrics don't work during testing
     public static boolean allowMetrics = true;
@@ -40,7 +38,7 @@ public class MendingEnchant extends JavaPlugin implements Listener {
     public void onEnable() {
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvents(this, this);
-        if(allowMetrics) {
+        if (allowMetrics) {
             Metrics metrics = new Metrics(this, 16292);
         }
         this.log.info("[MendingEnchant] is enabled !");
@@ -96,6 +94,7 @@ public class MendingEnchant extends JavaPlugin implements Listener {
         reloadConfig();
         saveDefaultConfig();
         config.updateConfig();
+        validateConfiguration();
     }
 
     @EventHandler
@@ -142,12 +141,7 @@ public class MendingEnchant extends JavaPlugin implements Listener {
             return true;
         }
 
-        Set<String> filteredMaterials = new HashSet<>();
-        for (String materialName : config.getStringList("enchanting.item-filter.materials")) {
-            filteredMaterials.add(materialName.toUpperCase(Locale.ROOT));
-        }
-
-        return isAllowedByMode(config.getString("enchanting.item-filter.mode"), filteredMaterials.contains(item.getType().name()));
+        return isAllowedByMode(config.getString("enchanting.item-filter.mode"), getConfiguredMaterials().contains(item.getType().name()));
     }
 
     private boolean isWorldAllowed(Location location) {
@@ -155,12 +149,7 @@ public class MendingEnchant extends JavaPlugin implements Listener {
             return true;
         }
 
-        Set<String> filteredWorlds = new HashSet<>();
-        for (String worldName : config.getStringList("world-filter.worlds")) {
-            filteredWorlds.add(worldName.toLowerCase(Locale.ROOT));
-        }
-
-        return isAllowedByMode(config.getString("world-filter.mode"), filteredWorlds.contains(location.getWorld().getName().toLowerCase(Locale.ROOT)));
+        return isAllowedByMode(config.getString("world-filter.mode"), getConfiguredWorlds().contains(location.getWorld().getName().toLowerCase(Locale.ROOT)));
     }
 
     private boolean isAllowedByMode(String mode, boolean listed) {
@@ -177,5 +166,99 @@ public class MendingEnchant extends JavaPlugin implements Listener {
             default:
                 return true;
         }
+    }
+
+    private void validateConfiguration() {
+        boolean changed = false;
+        changed |= validateFilterMode("enchanting.item-filter.mode");
+        changed |= validateFilterMode("world-filter.mode");
+        changed |= validateConfiguredMaterials();
+        changed |= validateConfiguredWorlds();
+
+        if (changed) {
+            saveConfig();
+        }
+    }
+
+    private boolean validateFilterMode(String path) {
+        String configuredMode = config.getString(path);
+        if (configuredMode == null) {
+            getLogger().warning("Missing filter mode at '" + path + "'. Falling back to 'disabled'.");
+            getConfig().set(path, "disabled");
+            return true;
+        }
+
+        String normalizedMode = configuredMode.toLowerCase(Locale.ROOT);
+        if (!VALID_FILTER_MODES.contains(normalizedMode)) {
+            getLogger().warning("Invalid filter mode '" + configuredMode + "' at '" + path + "'. Falling back to 'disabled'.");
+            getConfig().set(path, "disabled");
+            return true;
+        }
+
+        if (!configuredMode.equals(normalizedMode)) {
+            getConfig().set(path, normalizedMode);
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean validateConfiguredMaterials() {
+        List<String> configuredMaterials = config.getStringList("enchanting.item-filter.materials");
+        List<String> normalizedMaterials = new ArrayList<>();
+        for (String materialName : configuredMaterials) {
+            Material material = Material.matchMaterial(materialName);
+            if (material == null) {
+                getLogger().warning("Unknown material '" + materialName + "' in 'enchanting.item-filter.materials'. It will be ignored.");
+                continue;
+            }
+
+            normalizedMaterials.add(material.name());
+        }
+
+        List<String> deduplicatedMaterials = new ArrayList<>(new LinkedHashSet<>(normalizedMaterials));
+        if (!configuredMaterials.equals(deduplicatedMaterials)) {
+            getConfig().set("enchanting.item-filter.materials", deduplicatedMaterials);
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean validateConfiguredWorlds() {
+        List<String> configuredWorlds = config.getStringList("world-filter.worlds");
+        List<String> normalizedWorlds = new ArrayList<>();
+        for (String worldName : configuredWorlds) {
+            if (getServer().getWorld(worldName) == null) {
+                getLogger().warning("Unknown world '" + worldName + "' in 'world-filter.worlds'. It will be ignored.");
+                continue;
+            }
+
+            normalizedWorlds.add(worldName.toLowerCase(Locale.ROOT));
+        }
+
+        List<String> deduplicatedWorlds = new ArrayList<>(new LinkedHashSet<>(normalizedWorlds));
+        if (!configuredWorlds.equals(deduplicatedWorlds)) {
+            getConfig().set("world-filter.worlds", deduplicatedWorlds);
+            return true;
+        }
+
+        return false;
+    }
+
+    private Set<String> getConfiguredMaterials() {
+        Set<String> filteredMaterials = new HashSet<>();
+        for (String materialName : config.getStringList("enchanting.item-filter.materials")) {
+            filteredMaterials.add(materialName.toUpperCase(Locale.ROOT));
+        }
+        return filteredMaterials;
+    }
+
+    private Set<String> getConfiguredWorlds() {
+        Set<String> filteredWorlds = new HashSet<>();
+        for (String worldName : config.getStringList("world-filter.worlds")) {
+            filteredWorlds.add(worldName.toLowerCase(Locale.ROOT));
+        }
+        return filteredWorlds;
     }
 }
