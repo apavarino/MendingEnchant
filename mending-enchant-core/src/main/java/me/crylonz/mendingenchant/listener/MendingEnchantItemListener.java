@@ -6,6 +6,7 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.enchantment.EnchantItemEvent;
+import org.bukkit.inventory.ItemStack;
 
 public class MendingEnchantItemListener implements Listener {
     private final MendingEnchant plugin;
@@ -39,6 +40,9 @@ public class MendingEnchantItemListener implements Listener {
         randomValue += event.getExpLevelCost() / div;
         if (randomValue > 100 && event.getEnchantsToAdd().get(Enchantment.ARROW_INFINITE) == null) {
             event.getEnchantsToAdd().put(Enchantment.MENDING, 1);
+            ItemStack item = event.getItem();
+            String itemName = item == null ? "item" : item.getType().name();
+            plugin.messages.sendMendingObtained(event.getEnchanter(), "notifications.enchanting-success", itemName);
         }
     }
 }

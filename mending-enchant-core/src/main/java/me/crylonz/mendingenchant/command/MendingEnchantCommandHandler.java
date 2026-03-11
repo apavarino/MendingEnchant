@@ -28,18 +28,18 @@ public class MendingEnchantCommandHandler implements TabCompleter {
 
         if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
             if (!sender.hasPermission(RELOAD_PERMISSION)) {
-                sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
+                plugin.messages.send(sender, "commands.no-permission");
                 return true;
             }
 
             plugin.reloadPluginConfiguration();
-            sender.sendMessage(ChatColor.GREEN + "MendingEnchant configuration reloaded.");
+            plugin.messages.send(sender, "commands.reload-success");
             return true;
         }
 
         if (args.length == 1 && args[0].equalsIgnoreCase("info")) {
             if (!sender.hasPermission(INFO_PERMISSION)) {
-                sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
+                plugin.messages.send(sender, "commands.no-permission");
                 return true;
             }
 
@@ -47,7 +47,7 @@ public class MendingEnchantCommandHandler implements TabCompleter {
             return true;
         }
 
-        sender.sendMessage(ChatColor.YELLOW + "Usage: /" + label + " <reload|info>");
+        plugin.messages.send(sender, "commands.usage", label);
         return true;
     }
 

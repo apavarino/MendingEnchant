@@ -37,6 +37,7 @@ public class MendingEnchantFishingListener implements Listener {
 
             event.getPlayer().getInventory().addItem(book);
             event.getPlayer().playSound(event.getPlayer().getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 10, 1);
+            plugin.messages.sendMendingObtained(event.getPlayer(), "notifications.fishing-success", "ENCHANTED_BOOK");
         }
     }
 }

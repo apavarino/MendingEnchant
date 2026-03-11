@@ -1,0 +1,7 @@
+{
+  "commands.no-permission": "&cYou do not have permission to use this command.",
+  "commands.reload-success": "&aMendingEnchant configuration reloaded.",
+  "commands.usage": "&eUsage: /{0} <reload|info>",
+  "notifications.enchanting-success": "&aMending applied to &f{0}&a.",
+  "notifications.fishing-success": "&aYou fished up a Mending book."
+}

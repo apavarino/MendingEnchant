@@ -13,6 +13,10 @@ updater:
   # Enables automatic update checks and downloads.
   enabled: true
 
+localization:
+  # Language file loaded from plugins/MendingEnchant/localization/<locale>.json
+  locale: en_US
+
 enchanting:
   probabilities:
     # Chance to receive Mending at enchant level 30.

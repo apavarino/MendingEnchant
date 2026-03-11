@@ -1,6 +1,7 @@
 package me.crylonz.mendingenchant.filter;
 
 import be.seeseemelk.mockbukkit.entity.FishHookMock;
+import be.seeseemelk.mockbukkit.entity.PlayerMock;
 import me.crylonz.mendingenchant.support.MendingEnchantTestBase;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -32,19 +33,20 @@ public class MendingEnchantFilterIntegrationTest extends MendingEnchantTestBase 
     @Test
     @DisplayName("Fishing should give mending book")
     public void checkFishingResults() {
-        Player player = server.addPlayer();
+        PlayerMock player = server.addPlayer();
         server.getPluginManager().callEvent(new PlayerFishEvent(player, null, new FishHookMock(server, new UUID(1, 2)), PlayerFishEvent.State.CAUGHT_FISH));
 
         ItemStack item = player.getInventory().getItem(0);
         Assertions.assertNotNull(item);
         Assertions.assertEquals(Material.ENCHANTED_BOOK, item.getType());
         Assertions.assertTrue(((EnchantmentStorageMeta) item.getItemMeta()).hasStoredEnchant(Enchantment.MENDING));
+        Assertions.assertTrue(player.nextMessage().contains("Mending book"));
     }
 
     @Test
     @DisplayName("Enchanting should give the mending enchant to the tool")
     public void enchantingForMending() {
-        Player player = server.addPlayer();
+        PlayerMock player = server.addPlayer();
         PermissionAttachment attachment = player.addAttachment(plugin);
         attachment.setPermission("mendingenchant.use", true);
 
@@ -53,6 +55,7 @@ public class MendingEnchantFilterIntegrationTest extends MendingEnchantTestBase 
         server.getPluginManager().callEvent(event);
 
         Assertions.assertNotNull(event.getEnchantsToAdd().get(Enchantment.MENDING));
+        Assertions.assertTrue(player.nextMessage().contains("DIAMOND_PICKAXE"));
     }
 
     @Test

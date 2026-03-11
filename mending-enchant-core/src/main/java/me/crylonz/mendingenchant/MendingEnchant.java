@@ -5,6 +5,7 @@ import me.crylonz.mendingenchant.config.MendingEnchantConfigValidator;
 import me.crylonz.mendingenchant.listener.MendingEnchantFishingListener;
 import me.crylonz.mendingenchant.listener.MendingEnchantItemListener;
 import me.crylonz.mendingenchant.service.MendingEnchantFilterService;
+import me.crylonz.mendingenchant.service.MendingEnchantMessageService;
 import me.crylonz.mendingenchant.utils.MendingEnchantConfig;
 import me.crylonz.mendingenchant.utils.MendingEnchantUpdater;
 import org.bstats.bukkit.Metrics;
@@ -22,6 +23,7 @@ public class MendingEnchant extends JavaPlugin {
 
     public final Logger log = Logger.getLogger("Minecraft");
     public final MendingEnchantConfig config = new MendingEnchantConfig(this);
+    public final MendingEnchantMessageService messages = new MendingEnchantMessageService(this);
 
     private final MendingEnchantFilterService filterService = new MendingEnchantFilterService(config);
     private final MendingEnchantConfigValidator configValidator = new MendingEnchantConfigValidator(this, config);
@@ -64,6 +66,7 @@ public class MendingEnchant extends JavaPlugin {
 
     public void registerConfig() {
         config.register("updater.enabled", "auto-update", true);
+        config.register("localization.locale", "en_US");
         config.register("enchanting.probabilities.default", "DefaultProbability", 6.0);
         config.register("enchanting.probabilities.custom-permission-1", "CustomProbability1", 12.0);
         config.register("enchanting.probabilities.custom-permission-2", "CustomProbability2", 18.0);
@@ -79,6 +82,7 @@ public class MendingEnchant extends JavaPlugin {
         reloadConfig();
         saveDefaultConfig();
         config.updateConfig();
+        messages.reload();
         configValidator.validate();
     }
 }

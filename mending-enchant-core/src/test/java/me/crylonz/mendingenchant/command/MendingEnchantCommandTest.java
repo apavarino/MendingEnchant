@@ -29,6 +29,7 @@ public class MendingEnchantCommandTest extends MendingEnchantTestBase {
 
         Assertions.assertTrue(handled);
         Assertions.assertEquals(25.0, plugin.config.getDouble("fishing.probability"));
+        Assertions.assertTrue(player.nextMessage().contains("configuration reloaded"));
     }
 
     @Test
@@ -70,5 +71,17 @@ public class MendingEnchantCommandTest extends MendingEnchantTestBase {
 
         Assertions.assertTrue(completions.contains("reload"));
         Assertions.assertTrue(completions.contains("info"));
+    }
+
+    @Test
+    @DisplayName("Command should use configurable no permission message")
+    public void commandShouldUseNoPermissionMessage() {
+        PlayerMock player = server.addPlayer();
+
+        PluginCommand command = createPluginCommand("mendingenchant");
+        boolean handled = plugin.onCommand(player, command, "mendingenchant", new String[]{"reload"});
+
+        Assertions.assertTrue(handled);
+        Assertions.assertTrue(player.nextMessage().contains("do not have permission"));
     }
 }
