@@ -9,6 +9,7 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -24,7 +25,7 @@ import java.util.logging.Logger;
 
 import static org.bukkit.event.player.PlayerFishEvent.State.CAUGHT_FISH;
 
-public class MendingEnchant extends JavaPlugin implements Listener {
+public class MendingEnchant extends JavaPlugin implements Listener, TabCompleter {
     private static final String RELOAD_PERMISSION = "mendingenchant.admin.reload";
     private static final String INFO_PERMISSION = "mendingenchant.admin.info";
     private static final String BYPASS_ITEM_FILTER_PERMISSION = "mendingenchant.bypass.itemfilter";
@@ -88,6 +89,34 @@ public class MendingEnchant extends JavaPlugin implements Listener {
 
         sender.sendMessage(ChatColor.YELLOW + "Usage: /" + label + " <reload|info>");
         return true;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (!command.getName().equalsIgnoreCase("mendingenchant")) {
+            return Collections.emptyList();
+        }
+
+        if (args.length == 1) {
+            List<String> completions = new ArrayList<>();
+            if (sender.hasPermission(RELOAD_PERMISSION)) {
+                completions.add("reload");
+            }
+            if (sender.hasPermission(INFO_PERMISSION)) {
+                completions.add("info");
+            }
+
+            String prefix = args[0].toLowerCase(Locale.ROOT);
+            List<String> filteredCompletions = new ArrayList<>();
+            for (String completion : completions) {
+                if (completion.startsWith(prefix)) {
+                    filteredCompletions.add(completion);
+                }
+            }
+            return filteredCompletions;
+        }
+
+        return Collections.emptyList();
     }
 
     public void registerConfig() {

@@ -311,6 +311,21 @@ public class MendingEnchantTest {
         Assertions.assertTrue(player.nextMessage().contains("whitelist"));
     }
 
+    @Test
+    @DisplayName("Tab completion should suggest available subcommands")
+    public void tabCompletionShouldSuggestSubcommands() {
+        Player player = server.addPlayer();
+        PermissionAttachment pa = player.addAttachment(plugin);
+        pa.setPermission("mendingenchant.admin.reload", true);
+        pa.setPermission("mendingenchant.admin.info", true);
+
+        PluginCommand command = createPluginCommand("mendingenchant");
+        java.util.List<String> completions = plugin.onTabComplete(player, command, "mendingenchant", new String[]{""});
+
+        Assertions.assertTrue(completions.contains("reload"));
+        Assertions.assertTrue(completions.contains("info"));
+    }
+
     private PluginCommand createPluginCommand(String name) {
         try {
             Constructor<PluginCommand> constructor = PluginCommand.class.getDeclaredConstructor(String.class, org.bukkit.plugin.Plugin.class);
