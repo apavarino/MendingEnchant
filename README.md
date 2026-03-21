@@ -54,10 +54,10 @@ The official documentation is available at [stellionix.github.io/MendingEnchant]
 
 Useful pages:
 
-- [Installation](https://stellionix.github.io/MendingEnchant/installation/)
-- [Configuration](https://stellionix.github.io/MendingEnchant/configuration/)
-- [Commands and Permissions](https://stellionix.github.io/MendingEnchant/commands-and-perms/)
-- [Troubleshooting](https://stellionix.github.io/MendingEnchant/troubleshooting/)
+- [Installation](https://stellionix.github.io/MendingEnchant/latest/installation/)
+- [Configuration](https://stellionix.github.io/MendingEnchant/latest/configuration/)
+- [Commands and Permissions](https://stellionix.github.io/MendingEnchant/latest/commands-and-perms/)
+- [Troubleshooting](https://stellionix.github.io/MendingEnchant/latest/troubleshooting/)
 
 ## Commands
 
