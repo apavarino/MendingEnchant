@@ -42,25 +42,34 @@ tasks.named<Test>("test") {
     useJUnitPlatform()
 }
 
-tasks.register("printVersion") {
-    doLast {
-        println(project.version)
+tasks.processResources {
+    val pluginVersion = project.version.toString()
+    inputs.property("pluginVersion", pluginVersion)
+    filesMatching("plugin.yml") {
+        expand("pluginVersion" to pluginVersion)
     }
 }
 
+tasks.processTestResources {
+    val pluginVersion = project.version.toString()
+    inputs.property("pluginVersion", pluginVersion)
+    filesMatching("plugin.yml") {
+        expand("pluginVersion" to pluginVersion)
+    }
+}
 
 tasks.withType<ShadowJar> {
     relocate("org.bstats", "me.crylonz.mendingenchant")
-    archiveFileName.set("mending-enchant-SNAPSHOT.jar")
+    archiveFileName.set("mending-enchant-${project.version}.jar")
 }
 
 
 publishing {
     publications {
         create<MavenPublication>("maven") {
-            groupId = "me.crylonz.mendingenchant"
+            groupId = project.group.toString()
             artifactId = "mending-enchant"
-            version = "1.6.3-SNAPSHOT"
+            version = project.version.toString()
             from(components["java"])
         }
     }
