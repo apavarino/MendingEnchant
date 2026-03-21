@@ -1,0 +1,27 @@
+site_name: MendingEnchant Documentation
+site_url: https://stellionix.github.io/MendingEnchant/
+repo_url: https://github.com/stellionix/MendingEnchant
+repo_name: stellionix/MendingEnchant
+
+plugins:
+  - search
+  - stellionix-shared-docs
+
+theme:
+  name: material
+  logo: assets/images/mending-enchant-logo-small.png
+  favicon: assets/images/mending-enchant-logo-small.png
+
+nav:
+  - Getting Started:
+      - Home: index.md
+      - Download: download.md
+      - Installation: installation.md
+      - How It Works: how-it-works.md
+  - Administration:
+      - Configuration: configuration.md
+      - Commands and Permissions: commands-and-perms.md
+      - Customization: customization.md
+      - Troubleshooting: troubleshooting.md
+  - Developer:
+      - Contribution: contribution.md
