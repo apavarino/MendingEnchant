@@ -42,13 +42,18 @@ tasks.named<Test>("test") {
     useJUnitPlatform()
 }
 
+tasks.register("printVersion") {
+    doLast {
+        println(project.version)
+    }
+}
+
+
 tasks.withType<ShadowJar> {
     relocate("org.bstats", "me.crylonz.mendingenchant")
     archiveFileName.set("mending-enchant-SNAPSHOT.jar")
 }
 
-val spaceUsername: String by project
-val spacePassword: String by project
 
 publishing {
     publications {
@@ -57,15 +62,6 @@ publishing {
             artifactId = "mending-enchant"
             version = "1.6.3-SNAPSHOT"
             from(components["java"])
-        }
-    }
-    repositories {
-        maven {
-            url = uri("https://maven.pkg.jetbrains.space/openbeam/p/minecraft-projects/plugins-artifacts")
-            credentials {
-                username = System.getenv("JB_SPACE_CLIENT_ID")
-                password = System.getenv("JB_SPACE_CLIENT_SECRET")
-            }
         }
     }
 }
